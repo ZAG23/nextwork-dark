@@ -6,6 +6,8 @@ Every claim below was verified empirically — headless Chrome driven over the D
 
 **Headline:** a learner who follows the project exactly ends up with an extension whose popup opens, whose toggle appears to do nothing, and which produces no error message anywhere. Three independent blocking defects each cause that same symptom, so fixing one does not reveal progress.
 
+And once those are fixed, a fourth issue surfaces that the project never mentions: published projects render through a Web Component library, and page CSS cannot reach inside a shadow root (defect 8b).
+
 Project version: `cf82e2ed-9cc3-4b95-adc7-181889dc6d41_v1`
 
 ---
@@ -131,6 +133,18 @@ Two further traps found by measurement:
 
 - **Substring selectors over-match.** `[class*="tip"]` also matches `tiptap`, the editor root, so the entire content column was painted as a callout and formed a visible vertical seam against the canvas. Short patterns need `[class~="..."]`.
 - **Don't paint what was transparent.** The editor column is `rgba(0,0,0,0)` by design. Guessing a surface from a structural word invents a background the site never had, which is what produced the seam.
+
+### 8b. The component library is never mentioned
+
+Published projects render through a Web Component library — `nw-code-block`, `nw-button`, `nw-validation-box`, `nw-editor` and ~30 others. Measured on one project page: **1,032 shadow roots**, containing **596 light surfaces across 19 component types**.
+
+Page CSS cannot cross a shadow boundary. So a learner who completes the project exactly as taught gets an extension that themes the page chrome and leaves every component interior in light mode — cream code blocks, white buttons, mint reflection cards. On a step-heavy page that is most of what they are looking at.
+
+This is invisible from inside the tutorial, because the project the learner writes their answers into is rendered from the editor in plain DOM. The failure only appears on *published* projects, which is where they will actually use it.
+
+Getting past it needs `adoptedStyleSheets` on each open root, and one non-obvious detail: the sheet must be **unlayered**. The components' own rules sit in `@layer base` / `@layer utilities`, so an unlayered declaration outranks them — the exact inverse of the light-DOM situation in defect 7. Measured 596 → 2 with that approach.
+
+A note in the project that dark mode stops at a shadow boundary would be worth more than the fix itself; it is a concept most learners will meet for the first time here.
 
 ### 9. Dead code
 
