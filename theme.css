@@ -13,11 +13,14 @@ html[data-nwdark="on"] {
   color-scheme: dark;
 
   --nwd-canvas: #1a1817;
-  --nwd-surface: #221f1d;
-  --nwd-raised: #2a2624;
-  --nwd-well: #151312;
-  --nwd-line: #35302d;
-  --nwd-line-soft: #2c2826;
+  /* Surfaces sit further above the canvas than a strict tonal ramp would put
+     them: at only two or three steps up they read as faint smudges rather than
+     as panels, and the hairline borders disappeared entirely. */
+  --nwd-surface: #272320;
+  --nwd-raised: #302b27;
+  --nwd-well: #141211;
+  --nwd-line: #46403b;
+  --nwd-line-soft: #383330;
 
   --nwd-text: #ede8e3;
   --nwd-body: #cfc7c0;
@@ -50,7 +53,6 @@ html[data-nwdark="on"] section,
 html[data-nwdark="on"] [class*="nav"],
 html[data-nwdark="on"] [class*="header"],
 html[data-nwdark="on"] [class*="toolbar"],
-html[data-nwdark="on"] [class*="content"],
 html[data-nwdark="on"] [class*="container"],
 html[data-nwdark="on"] [class*="wrapper"],
 html[data-nwdark="on"] [class*="sidebar"],
@@ -60,18 +62,50 @@ html[data-nwdark="on"] [class*="toc"] {
   color: var(--nwd-body) !important;
 }
 
+/* The project metadata strip (difficulty / time / refreshed / concepts) is
+   transparent on the light site, where the surrounding whitespace separates it.
+   On dark it needs its own faint panel or it reads as loose floating text.
+   gap-x-12 is the distinguishing utility; the generic flex classes are not
+   safe to target on their own. */
+html[data-nwdark="on"] [class*="gap-x-12"] {
+  background-color: #201d1b !important;
+  border: 1px solid var(--nwd-line-soft) !important;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+/* Headings never take a background. Tailwind's flex utilities include
+   "content-center", which [class*="content"] matched -- that painted the page
+   title as an opaque block sitting proud of the canvas. */
+html[data-nwdark="on"] h1,
+html[data-nwdark="on"] h2,
+html[data-nwdark="on"] h3,
+html[data-nwdark="on"] h4,
+html[data-nwdark="on"] h5,
+html[data-nwdark="on"] h6 {
+  background-color: transparent !important;
+}
+
 /* Only classes that NAME a light background get a surface. Guessing from
    structural words like "card" or "container" repainted elements the site had
    left transparent -- the editor column is transparent by design, and giving it
    the card tone drew a hard vertical seam against the canvas either side.
    Anything genuinely light is caught by measurement in content.js instead. */
 html[data-nwdark="on"] [class*="bg-white"],
-html[data-nwdark="on"] [class*="bg-paper"],
 html[data-nwdark="on"] [class*="bg-secondary"],
-html[data-nwdark="on"] [class*="bg-brand-25"],
-html[data-nwdark="on"] [class*="bg-cover"] {
+html[data-nwdark="on"] [class*="bg-brand-25"] {
   background-color: var(--nwd-surface) !important;
   border-color: var(--nwd-line-soft) !important;
+  color: var(--nwd-body) !important;
+}
+
+/* bg-paper and bg-leather are the page's own backdrop, not cards. Giving them
+   the surface tone painted a full-width slab behind the title that read as a
+   box around it. They belong on the canvas. */
+html[data-nwdark="on"] [class*="bg-paper"],
+html[data-nwdark="on"] [class*="bg-leather"],
+html[data-nwdark="on"] [class*="bg-cover"] {
+  background-color: var(--nwd-canvas) !important;
   color: var(--nwd-body) !important;
 }
 

@@ -3,6 +3,7 @@
   var gate = readMirror();
   var observing = false;
   var sweep = null;
+  var pierce = null;
 
   applyGate();
   ensureTheme();
@@ -11,6 +12,122 @@
   watchVisibility();
   enableAnimation();
   sweepLightSurfaces();
+  pierceShadowRoots();
+
+  /* Published projects render through a Web Component library -- nw-code-block,
+     nw-button, nw-validation-box and ~30 others, over a thousand shadow roots on
+     one page. A page stylesheet cannot cross a shadow boundary, so theme.css and
+     the sweep above are both blind to every component interior; measured on one
+     project page, 596 light surfaces across 19 component types.
+
+     Every root is mode:"open" and supports adoptedStyleSheets, so one shared
+     constructed sheet can be adopted into all of them. The sheet is deliberately
+     UNLAYERED: the components' own rules sit in @layer base/utilities, and an
+     unlayered declaration outranks any layered one -- the opposite of the
+     light-DOM case, where the page's layered !important beats us. */
+  function pierceShadowRoots() {
+    var sheet = null;
+    var pending = false;
+
+    build();
+    run();
+    if (document.readyState !== "complete") window.addEventListener("load", run);
+    watchForNewRoots();
+
+    pierce = run;
+
+    function build() {
+      if (typeof CSSStyleSheet !== "function") return;
+      try {
+        sheet = new CSSStyleSheet();
+      } catch (e) {
+        return;
+      }
+      sheet.replaceSync([
+        ":host{background-color:transparent;color:#cfc7c0;}",
+        /* Element selectors, not *, so this stays cheap across ~1000 roots and
+           does not repaint icon glyphs or transparent wrappers. */
+        "div,section,article,aside,header,footer,ul,ol,li,dl,dt,dd,",
+        "p,span,label,small,strong,b,em,i,h1,h2,h3,h4,h5,h6,",
+        "table,thead,tbody,tr,td,th,figure,figcaption,summary,details",
+        "{background-color:transparent!important;color:#cfc7c0!important;border-color:#46403b!important;}",
+        "h1,h2,h3,h4,h5,h6,strong,b{color:#ede8e3!important;}",
+        /* Surfaces the components paint themselves. */
+        "[class*='bg-'],blockquote,pre,code,textarea,input,select,",
+        "[class*='card'],[class*='panel'],[class*='box'],[class*='dropzone']",
+        "{background-color:#272320!important;border-color:#46403b!important;}",
+        "pre,code,[class*='code']{background-color:#141211!important;color:#cfc7c0!important;}",
+        "textarea,input,select{color:#ede8e3!important;caret-color:#ede8e3!important;}",
+        "button{background-color:transparent!important;color:#ede8e3!important;border-color:#46403b!important;}",
+        "button[class*='bg-']{background-color:#38322e!important;}",
+        "a{color:#7fb3f2!important;}",
+        /* Icons inherit currentColor; painting them would fill the glyph box. */
+        "svg,svg *,path,circle,rect,line,polyline,polygon,g",
+        "{background-color:transparent!important;border-color:transparent!important;}",
+        "::selection{background-color:#4a3a48!important;color:#ede8e3!important;}",
+        "::placeholder{color:#9c928a!important;}"
+      ].join(""));
+    }
+
+    function run() {
+      if (!sheet) return;
+      if (!has("dark")) {
+        release();
+        return;
+      }
+      walk(document, adopt);
+    }
+
+    function adopt(root) {
+      var sheets = root.adoptedStyleSheets;
+      if (!sheets || sheets.indexOf(sheet) !== -1) return;
+      try {
+        root.adoptedStyleSheets = sheets.concat(sheet);
+      } catch (e) {}
+    }
+
+    function release() {
+      walk(document, function (root) {
+        var sheets = root.adoptedStyleSheets;
+        if (!sheets) return;
+        var i = sheets.indexOf(sheet);
+        if (i === -1) return;
+        try {
+          root.adoptedStyleSheets = sheets.slice(0, i).concat(sheets.slice(i + 1));
+        } catch (e) {}
+      });
+    }
+
+    /* Iterative rather than recursive: nesting can run deep and a blown stack
+       would abort the traversal partway, leaving half the page light. */
+    function walk(start, fn) {
+      var queue = [start];
+      while (queue.length) {
+        var node = queue.pop();
+        var hosts = node.querySelectorAll("*");
+        for (var i = 0; i < hosts.length; i++) {
+          var root = hosts[i].shadowRoot;
+          if (!root) continue;
+          fn(root);
+          queue.push(root);
+        }
+      }
+    }
+
+    /* Components mount lazily -- expanding a step attaches dozens of new roots.
+       Batched on rAF because the editor mutates on every keystroke. */
+    function watchForNewRoots() {
+      if (typeof MutationObserver !== "function") return;
+      new MutationObserver(function () {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(function () {
+          pending = false;
+          run();
+        });
+      }).observe(document.documentElement, { childList: true, subtree: true });
+    }
+  }
 
   /* The stylesheet lightens ALL text but can only darken surfaces it can name,
      and NextWork's surfaces are unnameable in CSS: arbitrary values (bg-[#f0ebe9]),
@@ -69,7 +186,7 @@
        So the sheet genuinely cannot repaint these surfaces; only the element can. */
     function paint(el) {
       el.setAttribute("data-nwd-lit", "");
-      el.style.setProperty("background-color", "#221f1d", "important");
+      el.style.setProperty("background-color", "#272320", "important");
       el.style.setProperty("background-image", "none", "important");
       darkenText(el);
     }
@@ -238,6 +355,7 @@
     /* The sweep depends on the gate being open and on body existing, neither of
        which is true at document_start, so it is re-run whenever the gate moves. */
     if (sweep) sweep();
+    if (pierce) pierce();
   }
 
   function reconcile() {
