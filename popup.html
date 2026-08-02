@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NextWork Dark</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1 class="title"><img class="mark" src="icons/icon32.png" alt="" width="18" height="18">NextWork Dark</h1>
+
+  <ul class="rows">
+    <li class="row" id="dark-row">
+      <label class="switch" for="dark-toggle">
+        <span class="switch__text">
+          <span class="switch__name">Dark Mode</span>
+          <span class="switch__hint" id="dark-hint">Theme nextwork.ai and .org pages</span>
+        </span>
+        <span class="switch__control">
+          <input type="checkbox" id="dark-toggle" class="switch__input" aria-describedby="dark-hint">
+          <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
+        </span>
+      </label>
+    </li>
+
+    <!-- Ships restricted: render() only ever relaxes this, so there is no
+         window in which Dim Images is clickable while dark mode is off. -->
+    <li class="row disabled" id="dim-row">
+      <label class="switch" for="dim-toggle">
+        <span class="switch__text">
+          <span class="switch__name">Dim Images</span>
+          <span class="switch__hint" id="dim-hint">Softens images; hover restores them</span>
+        </span>
+        <span class="switch__control">
+          <input type="checkbox" id="dim-toggle" class="switch__input" aria-describedby="dim-hint" disabled>
+          <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
+        </span>
+      </label>
+    </li>
+  </ul>
+
+  <p class="status" id="status" role="status">Loading</p>
+
+  <script src="popup.js"></script>
+</body>
+</html>

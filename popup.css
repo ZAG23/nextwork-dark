@@ -1,0 +1,124 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  width: 268px;
+  padding: 16px 18px 14px;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #1a1a2e;
+  color: #e8e8ea;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.mark {
+  flex: none;
+  display: block;
+}
+
+.rows { list-style: none; }
+
+.row { border-top: 1px solid #2a2f3a; }
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.switch__text { flex: 1 1 auto; }
+
+.switch__name { display: block; color: #e8e8ea; }
+
+.switch__hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #7c8393;
+}
+
+.switch__control {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 26px;
+}
+
+/* Full-size and topmost so a real click lands on the control itself. Never
+   width:0/height:0/display:none -- a zero-size input is what made the previous
+   switch unhittable. No border-radius either: a radius on a transparent
+   inset:0 input makes the corner hit-test fall through to the parent. */
+.switch__input {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.switch__track {
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  background: #3a3a4a;
+  -webkit-transition: background-color 0.22s ease;
+  transition: background-color 0.22s ease;
+}
+
+/* A sibling span rather than a pseudo-element on the input: older WebKit does
+   not reliably render ::before on form controls. */
+.switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  -webkit-transition: -webkit-transform 0.22s ease;
+  transition: transform 0.22s ease;
+}
+
+.switch__input:checked + .switch__track { background: #60a5fa; }
+
+.switch__input:checked + .switch__track .switch__thumb {
+  -webkit-transform: translateX(18px);
+  transform: translateX(18px);
+}
+
+/* :focus is duplicated because older WebKit lacks :focus-visible, which would
+   otherwise leave the control with no visible focus ring. */
+.switch__input:focus + .switch__track,
+.switch__input:focus-visible + .switch__track {
+  outline: 2px solid #a5f3fc;
+  outline-offset: 2px;
+}
+
+.row.disabled .switch { cursor: default; }
+.row.disabled .switch__text { opacity: 0.45; }
+.row.disabled .switch__track { opacity: 0.45; }
+
+.status {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #2a2f3a;
+  font-size: 11px;
+  color: #6b7280;
+  text-align: center;
+}

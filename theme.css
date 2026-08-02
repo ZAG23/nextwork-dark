@@ -1,0 +1,385 @@
+/* Every rule is gated on html[data-nwdark="on"] so this stylesheet can be
+   declared at document_start and stay inert until content.js opens the gate. */
+
+/* The palette is WARM on purpose. Sampling the live site shows every surface and
+   text colour has red > green > blue -- paper #f8f5f1, cards #f0e9e6, body copy
+   #443e3a. A cool blue-grey dark theme fights that character and reads as a
+   different site, so these tones invert the same hue family instead. Only four
+   surface steps exist, and they sit close together: many slightly different
+   darks are what makes a dark theme look patchy rather than composed. */
+html[data-nwdark="on"] {
+  /* Also the sentinel content.js probes to detect whether this sheet loaded at
+     all; an extension layer that ignores the manifest css key needs it to fail. */
+  color-scheme: dark;
+
+  --nwd-canvas: #1a1817;
+  --nwd-surface: #221f1d;
+  --nwd-raised: #2a2624;
+  --nwd-well: #151312;
+  --nwd-line: #35302d;
+  --nwd-line-soft: #2c2826;
+
+  --nwd-text: #ede8e3;
+  --nwd-body: #cfc7c0;
+  --nwd-muted: #9c928a;
+
+  /* The site's own accents, lifted just enough to stay legible on a dark
+     surface. Keeping its magenta/green/amber is what preserves the feel. */
+  --nwd-link: #7fb3f2;
+  --nwd-accent: #d979d6;
+  --nwd-success: #7fc97e;
+  --nwd-amber: #d9a54a;
+
+  --background-color-primary: #221f1d !important;
+  --color-glass-border: #35302d !important;
+}
+
+html[data-nwdark="on"],
+html[data-nwdark="on"] body {
+  background-color: var(--nwd-canvas) !important;
+  color: var(--nwd-body) !important;
+}
+
+/* Chrome, sidebar and content all sit on the same canvas. Giving each its own
+   shade is what produced the banded look; only genuinely raised things lift. */
+html[data-nwdark="on"] header,
+html[data-nwdark="on"] nav,
+html[data-nwdark="on"] main,
+html[data-nwdark="on"] article,
+html[data-nwdark="on"] section,
+html[data-nwdark="on"] [class*="nav"],
+html[data-nwdark="on"] [class*="header"],
+html[data-nwdark="on"] [class*="toolbar"],
+html[data-nwdark="on"] [class*="content"],
+html[data-nwdark="on"] [class*="container"],
+html[data-nwdark="on"] [class*="wrapper"],
+html[data-nwdark="on"] [class*="sidebar"],
+html[data-nwdark="on"] [class*="toc"] {
+  background-color: var(--nwd-canvas) !important;
+  border-color: var(--nwd-line-soft) !important;
+  color: var(--nwd-body) !important;
+}
+
+/* Only classes that NAME a light background get a surface. Guessing from
+   structural words like "card" or "container" repainted elements the site had
+   left transparent -- the editor column is transparent by design, and giving it
+   the card tone drew a hard vertical seam against the canvas either side.
+   Anything genuinely light is caught by measurement in content.js instead. */
+html[data-nwdark="on"] [class*="bg-white"],
+html[data-nwdark="on"] [class*="bg-paper"],
+html[data-nwdark="on"] [class*="bg-secondary"],
+html[data-nwdark="on"] [class*="bg-brand-25"],
+html[data-nwdark="on"] [class*="bg-cover"] {
+  background-color: var(--nwd-surface) !important;
+  border-color: var(--nwd-line-soft) !important;
+  color: var(--nwd-body) !important;
+}
+
+/* Borders and text still need correcting on these, but not a background. */
+html[data-nwdark="on"] [class*="card"],
+html[data-nwdark="on"] [class*="panel"],
+html[data-nwdark="on"] [class*="surface"],
+html[data-nwdark="on"] [class*="box"],
+html[data-nwdark="on"] [class*="menu"] {
+  border-color: var(--nwd-line-soft) !important;
+  color: var(--nwd-body) !important;
+}
+
+html[data-nwdark="on"] [class*="modal"],
+html[data-nwdark="on"] [class*="dialog"],
+html[data-nwdark="on"] [class*="dropdown"] {
+  background-color: var(--nwd-raised) !important;
+  border-color: var(--nwd-line) !important;
+  color: var(--nwd-body) !important;
+}
+
+html[data-nwdark="on"] h1,
+html[data-nwdark="on"] h2,
+html[data-nwdark="on"] h3,
+html[data-nwdark="on"] h4,
+html[data-nwdark="on"] h5,
+html[data-nwdark="on"] h6 {
+  color: var(--nwd-text) !important;
+}
+
+/* div is included because NextWork's editor emits body copy as bare
+   <div data-node-view-content-react>, which otherwise keeps its light colour. */
+html[data-nwdark="on"] p,
+html[data-nwdark="on"] div,
+html[data-nwdark="on"] li,
+html[data-nwdark="on"] span,
+html[data-nwdark="on"] td,
+html[data-nwdark="on"] th,
+html[data-nwdark="on"] label,
+html[data-nwdark="on"] dt,
+html[data-nwdark="on"] dd,
+/* Inline emphasis carries the site's dark brand colour, which on a dark
+   background renders as near-invisible text inside otherwise readable copy. */
+html[data-nwdark="on"] em,
+html[data-nwdark="on"] i,
+html[data-nwdark="on"] blockquote,
+html[data-nwdark="on"] summary,
+html[data-nwdark="on"] figcaption {
+  color: var(--nwd-body) !important;
+}
+
+html[data-nwdark="on"] strong,
+html[data-nwdark="on"] b {
+  color: var(--nwd-text) !important;
+}
+
+html[data-nwdark="on"] small,
+html[data-nwdark="on"] [class*="hint"],
+html[data-nwdark="on"] [class*="caption"],
+html[data-nwdark="on"] [class*="muted"] {
+  color: var(--nwd-muted) !important;
+}
+
+html[data-nwdark="on"] a {
+  color: var(--nwd-link) !important;
+}
+
+html[data-nwdark="on"] a:hover {
+  color: #a7cbf7 !important;
+}
+
+/* Buttons are deliberately NOT given a background here. Repainting every button
+   turned the transparent icon controls -- send arrow, scroll chevron, close --
+   into solid blue circles. Class names cannot distinguish them: NextWork's
+   utility strings contain "bg-" whether or not a background is painted, so the
+   only reliable signal is the computed colour, which CSS cannot select on.
+   The white CTA surface is neutralised via the bg-white rule above instead. */
+html[data-nwdark="on"] button,
+html[data-nwdark="on"] [class*="btn"],
+html[data-nwdark="on"] [role="button"] {
+  color: var(--nwd-text) !important;
+  border-color: var(--nwd-line) !important;
+}
+
+/* Code sits just below the canvas rather than near-black, and keeps the site's
+   syntax hues (magenta/green/amber) instead of a single flat cyan. */
+html[data-nwdark="on"] pre,
+html[data-nwdark="on"] code,
+html[data-nwdark="on"] [class~="code"],
+html[data-nwdark="on"] [class*="code-block"],
+html[data-nwdark="on"] [class*="codeblock"] {
+  background-color: var(--nwd-well) !important;
+  color: var(--nwd-body) !important;
+  border-color: var(--nwd-line-soft) !important;
+}
+
+/* Substring matching is dangerous on short words: [class*="tip"] also matched
+   "tiptap", the editor root, so the whole content column was painted as a
+   callout and seamed against the canvas. These use word boundaries. */
+html[data-nwdark="on"] [class*="callout"],
+html[data-nwdark="on"] [class*="alert"],
+html[data-nwdark="on"] [class*="notice"],
+html[data-nwdark="on"] [class~="info"],
+html[data-nwdark="on"] [class*="warning"],
+html[data-nwdark="on"] [class~="tip"],
+html[data-nwdark="on"] blockquote {
+  background-color: var(--nwd-surface) !important;
+  border-color: var(--nwd-line) !important;
+  color: var(--nwd-body) !important;
+}
+
+html[data-nwdark="on"] input,
+html[data-nwdark="on"] textarea,
+html[data-nwdark="on"] select {
+  background-color: var(--nwd-surface) !important;
+  color: var(--nwd-text) !important;
+  border-color: var(--nwd-line) !important;
+}
+
+html[data-nwdark="on"] input:focus,
+html[data-nwdark="on"] textarea:focus,
+html[data-nwdark="on"] select:focus {
+  border-color: var(--nwd-link) !important;
+  outline-color: var(--nwd-link) !important;
+}
+
+html[data-nwdark="on"] [class*="progress"] {
+  background-color: var(--nwd-raised) !important;
+}
+
+/* The fill is a child of the track and carries the page's dark brand colour,
+   which becomes invisible once the track is darkened. */
+html[data-nwdark="on"] [class*="progress"] > * {
+  background-color: var(--nwd-success) !important;
+}
+
+html[data-nwdark="on"] hr,
+html[data-nwdark="on"] [class*="divider"],
+html[data-nwdark="on"] [class*="separator"] {
+  border-color: var(--nwd-line-soft) !important;
+  background-color: var(--nwd-line-soft) !important;
+}
+
+html[data-nwdark="on"] img {
+  border-radius: 4px;
+}
+
+html[data-nwdark="on"]::-webkit-scrollbar,
+html[data-nwdark="on"] ::-webkit-scrollbar {
+  width: 8px;
+}
+
+html[data-nwdark="on"]::-webkit-scrollbar-track,
+html[data-nwdark="on"] ::-webkit-scrollbar-track {
+  background: var(--nwd-canvas);
+}
+
+html[data-nwdark="on"]::-webkit-scrollbar-thumb,
+html[data-nwdark="on"] ::-webkit-scrollbar-thumb {
+  background: #423c38;
+  border-radius: 4px;
+}
+
+html[data-nwdark="on"]::-webkit-scrollbar-thumb:hover,
+html[data-nwdark="on"] ::-webkit-scrollbar-thumb:hover {
+  background: #524a45;
+}
+
+/* Dim Images. The compound gate makes dimming structurally inert whenever dark
+   mode is off, so no JS has to enforce that dependency. */
+html[data-nwdark="on"][data-nwdim="on"] img {
+  -webkit-filter: brightness(0.8) !important;
+  filter: brightness(0.8) !important;
+  -webkit-transition: -webkit-filter 0.3s ease !important;
+  transition: filter 0.3s ease !important;
+}
+
+html[data-nwdark="on"][data-nwdim="on"] img:hover {
+  -webkit-filter: brightness(1) !important;
+  filter: brightness(1) !important;
+}
+
+/* Gradients are background-IMAGE, so no background-color rule reaches them.
+   These fade to the site's paper tone rather than to literal white, and appear
+   as bright smears where content scrolls out of view. The glass surfaces behind
+   the floating toolbar are layered gradients built the same way. */
+html[data-nwdark="on"] [class*="bg-linear"],
+html[data-nwdark="on"] [class*="bg-gradient"],
+html[data-nwdark="on"] [class*="from-white"],
+html[data-nwdark="on"] [class*="gradient"],
+html[data-nwdark="on"] [class*="glassSurface"],
+html[data-nwdark="on"] [class*="glass"] {
+  background-image: none !important;
+}
+
+html[data-nwdark="on"] [class*="glassSurface"],
+html[data-nwdark="on"] [class*="glass"] {
+  background-color: var(--nwd-raised) !important;
+  border-color: var(--nwd-line) !important;
+}
+
+/* The scroll-fade overlays get their gradient from a stylesheet rule, not a
+   utility class, so no [class*="gradient"] selector can reach them. Their only
+   reliable signature is structural: a pointer-events-none sticky/absolute strip.
+   Without this they stay as bright smears under the step list and the hero. */
+html[data-nwdark="on"] [class*="pointer-events-none"][class*="sticky"],
+html[data-nwdark="on"] [class*="pointer-events-none"][class*="absolute"],
+html[data-nwdark="on"] [class*="pointer-events-none"][class*="inset-x-0"],
+html[data-nwdark="on"] [class*="docs-hero"] {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+/* Tailwind arbitrary-value classes such as bg-[#f0ebe9] name no palette token,
+   so they cannot be matched by a bg-white/bg-paper selector. Matching the
+   bracket itself is the only way to reach them. */
+html[data-nwdark="on"] [class*="bg-["],
+html[data-nwdark="on"] [class*="bg-primary-solid"] {
+  background-color: var(--nwd-surface) !important;
+}
+
+/* content.js measures computed colours and marks every remaining light surface
+   with data-nwd-lit. This is the catch-all: text is lightened globally, so any
+   surface the selectors above miss would otherwise be light-on-light. Class
+   names cannot express these -- semantic utilities like bg-success carry no
+   colour, and gradient stops live in the image. */
+html[data-nwdark="on"] [data-nwd-lit] {
+  background-color: var(--nwd-surface) !important;
+  background-image: none !important;
+  border-color: var(--nwd-line-soft) !important;
+}
+
+/* Descendants inherit the site's dark-on-light intent, so their explicit light
+   or brand colours have to come back to the body tone. */
+html[data-nwdark="on"] [data-nwd-lit],
+html[data-nwdark="on"] [data-nwd-lit] p,
+html[data-nwdark="on"] [data-nwd-lit] span,
+html[data-nwdark="on"] [data-nwd-lit] div,
+html[data-nwdark="on"] [data-nwd-lit] li,
+html[data-nwdark="on"] [data-nwd-lit] label,
+html[data-nwdark="on"] [data-nwd-lit] h1,
+html[data-nwdark="on"] [data-nwd-lit] h2,
+html[data-nwdark="on"] [data-nwd-lit] h3,
+html[data-nwdark="on"] [data-nwd-lit] h4 {
+  color: var(--nwd-body) !important;
+}
+
+html[data-nwdark="on"] [data-nwd-lit] h1,
+html[data-nwdark="on"] [data-nwd-lit] h2,
+html[data-nwdark="on"] [data-nwd-lit] h3,
+html[data-nwdark="on"] [data-nwd-lit] h4,
+html[data-nwdark="on"] [data-nwd-lit] strong,
+html[data-nwdark="on"] [data-nwd-lit] b {
+  color: var(--nwd-text) !important;
+}
+
+/* Tailwind's white/light border utilities are a separate axis from background,
+   so a themed panel can still be ringed in white. */
+html[data-nwdark="on"] [class*="border-white"],
+html[data-nwdark="on"] [class*="border-paper"],
+html[data-nwdark="on"] [class*="border-secondary"],
+html[data-nwdark="on"] [class*="border-tertiary"],
+html[data-nwdark="on"] [class*="ring-white"] {
+  border-color: var(--nwd-line-soft) !important;
+}
+
+html[data-nwdark="on"] [class*="ring-white"] {
+  --tw-ring-color: var(--nwd-line-soft) !important;
+}
+
+/* The site's selection colour is tuned for a light page and reads as an opaque
+   blue slab over dark text. */
+html[data-nwdark="on"] ::selection {
+  background-color: #4a3a48 !important;
+  color: var(--nwd-text) !important;
+}
+
+html[data-nwdark="on"] ::-moz-selection {
+  background-color: #4a3a48 !important;
+  color: var(--nwd-text) !important;
+}
+
+/* Native form controls and the caret otherwise follow the OS light scheme. */
+html[data-nwdark="on"] input,
+html[data-nwdark="on"] textarea {
+  caret-color: var(--nwd-text) !important;
+}
+
+html[data-nwdark="on"] ::placeholder {
+  color: var(--nwd-muted) !important;
+}
+
+/* data-nwd-animate is absent during page load, so a page that opens dark paints
+   dark instantly instead of fading up from white. content.js adds it on the
+   next frame so only user toggles cross-fade. */
+html[data-nwdark="on"][data-nwd-animate] body *:not(img):not(video):not(canvas) {
+  -webkit-transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-nwdark="on"][data-nwd-animate] body *:not(img):not(video):not(canvas) {
+    -webkit-transition: none;
+    transition: none;
+  }
+
+  html[data-nwdark="on"][data-nwdim="on"] img {
+    -webkit-transition: none !important;
+    transition: none !important;
+  }
+}

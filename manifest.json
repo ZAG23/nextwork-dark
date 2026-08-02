@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "NextWork Dark",
+  "description": "Dark mode for the NextWork learning platform, with optional image dimming.",
+  "version": "2.0",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://nextwork.ai/*",
+    "https://*.nextwork.ai/*",
+    "https://nextwork.org/*",
+    "https://*.nextwork.org/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://nextwork.ai/*",
+        "https://*.nextwork.ai/*",
+        "https://nextwork.org/*",
+        "https://*.nextwork.org/*"
+      ],
+      "css": ["theme.css"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["theme.css"],
+      "matches": [
+        "https://nextwork.ai/*",
+        "https://*.nextwork.ai/*",
+        "https://nextwork.org/*",
+        "https://*.nextwork.org/*"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "NextWork Dark",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "toggle-dark": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D",
+        "mac": "Command+Shift+D"
+      },
+      "description": "Toggle NextWork dark mode"
+    }
+  }
+}

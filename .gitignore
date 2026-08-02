@@ -1,0 +1,8 @@
+# Unrelated earlier extension kept for local reference only
+nightshift-backup/
+
+# NextWork's course text — theirs to publish, not redistributed here
+.claude/
+
+.DS_Store
+*.log
