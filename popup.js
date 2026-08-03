@@ -61,15 +61,18 @@
       openHome();
     });
 
+    /* "noopener" on both fallbacks: without it the new tab receives a
+       window.opener handle back to this popup's context. chrome.tabs.create
+       needs no equivalent -- it opens the tab with no opener to begin with. */
     function openHome() {
       try {
         if (chrome.tabs && chrome.tabs.create) {
           chrome.tabs.create({ url: HOME });
         } else {
-          window.open(HOME, "_blank");
+          window.open(HOME, "_blank", "noopener");
         }
       } catch (e) {
-        window.open(HOME, "_blank");
+        window.open(HOME, "_blank", "noopener");
       }
       /* Chrome keeps the popup open after tabs.create; closing it matches what a
          user expects from a navigation action. */
@@ -160,9 +163,15 @@
     /* Explicit class rather than :has() on the parent, which older WebKit does
        not support. */
     dimRow.className = prefs.darkMode ? "row" : "row disabled";
-    status.textContent = prefs.darkMode
-      ? prefs.dimImages ? "Dark mode on, images dimmed" : "Dark mode on"
-      : "Dark mode off";
+    status.textContent = statusText();
+  }
+
+  /* Dimming is only meaningful while dark mode is on, so the off state is
+     reported on its own rather than as a combination. */
+  function statusText() {
+    if (!prefs.darkMode) return "Dark mode off";
+    if (prefs.dimImages) return "Dark mode on, images dimmed";
+    return "Dark mode on";
   }
 
   function normalize(result) {
