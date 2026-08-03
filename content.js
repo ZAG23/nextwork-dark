@@ -101,21 +101,23 @@
 
     function release() {
       covered = typeof WeakSet === "function" ? new WeakSet() : null;
+      /* Signals no skip, ever: a root that does not carry the sheet may still
+         contain one that does, so removal has to reach the whole tree. */
       walk(document, function (root) {
         var sheets = root.adoptedStyleSheets;
-        if (!sheets) return false;
+        if (!sheets) return;
         var i = sheets.indexOf(sheet);
-        if (i === -1) return false;
+        if (i === -1) return;
         try {
           root.adoptedStyleSheets = sheets.slice(0, i).concat(sheets.slice(i + 1));
         } catch (e) {}
-        return false;
       });
     }
 
     /* Iterative rather than recursive: nesting can run deep and a blown stack
        would abort the traversal partway, leaving half the page light.
-       fn returns true when its subtree is already handled and can be skipped. */
+       fn returns true when its subtree is already handled and can be skipped;
+       returning nothing means keep descending. */
     function walk(start, fn) {
       var queue = [start];
       while (queue.length) {

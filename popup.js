@@ -61,15 +61,18 @@
       openHome();
     });
 
+    /* "noopener" on both fallbacks: without it the new tab receives a
+       window.opener handle back to this popup's context. chrome.tabs.create
+       needs no equivalent -- it opens the tab with no opener to begin with. */
     function openHome() {
       try {
         if (chrome.tabs && chrome.tabs.create) {
           chrome.tabs.create({ url: HOME });
         } else {
-          window.open(HOME, "_blank");
+          window.open(HOME, "_blank", "noopener");
         }
       } catch (e) {
-        window.open(HOME, "_blank");
+        window.open(HOME, "_blank", "noopener");
       }
       /* Chrome keeps the popup open after tabs.create; closing it matches what a
          user expects from a navigation action. */
