@@ -8,7 +8,7 @@ Every claim below was verified empirically — headless Chrome driven over the D
 
 **Headline:** a learner who follows the project exactly ends up with an extension whose popup opens, whose toggle appears to do nothing, and which produces no error message anywhere. Three independent blocking defects each cause that same symptom, so fixing one does not reveal progress.
 
-And once those are fixed, a fourth issue surfaces that the project never mentions: published projects render through a Web Component library, and page CSS cannot reach inside a shadow root (defect 8b).
+And once those are fixed, a fourth issue surfaces that the project never mentions: published projects render through a Web Component library, and page CSS cannot reach inside a shadow root (defect 8a).
 
 Project version: `cf82e2ed-9cc3-4b95-adc7-181889dc6d41_v1`
 
@@ -116,7 +116,7 @@ Consequence: the reflection cards render as bright mint with pale, near-invisibl
 
 **Fix:** for surfaces the page paints via layered utilities, set styles inline from JS.
 
-### 8. Selectors do not match the real DOM
+### 8a. Selectors do not match the real DOM
 
 `dark-mode.css` guesses structural class names (`[class*="card"]`, `[class*="panel"]`, `[class*="box"]`). NextWork ships Tailwind, so the real surfaces are:
 
@@ -136,7 +136,7 @@ Two further traps found by measurement:
 - **Substring selectors over-match.** `[class*="tip"]` also matches `tiptap`, the editor root, so the entire content column was painted as a callout and formed a visible vertical seam against the canvas. Short patterns need `[class~="..."]`.
 - **Don't paint what was transparent.** The editor column is `rgba(0,0,0,0)` by design. Guessing a surface from a structural word invents a background the site never had, which is what produced the seam.
 
-### 8b. The component library is never mentioned
+### 8b. Shadow DOM and the component library are never mentioned
 
 Published projects render through a Web Component library — `nw-code-block`, `nw-button`, `nw-validation-box`, `nw-editor` and ~30 others. Measured on one project page: **1,032 shadow roots**, containing **596 light surfaces across 19 component types**.
 
