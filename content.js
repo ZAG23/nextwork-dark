@@ -92,17 +92,16 @@
         if (covered) covered.add(root);
         return true;
       }
+      /* The guard covers the write alone -- the only statement here that can
+         throw, and only for a root that is closed or already detached. Neither
+         becomes writable later, so one refusing root is skipped rather than
+         retried, and must not abort the traversal of the ~1000 others. */
       try {
         root.adoptedStyleSheets = sheets.concat(sheet);
-        if (covered) covered.add(root);
       } catch (e) {
-        /* Not rethrown: the write throws only for a root that is closed or
-           already detached, and neither becomes writable later. One refusing
-           root must not abort the traversal of the ~1000 others. Returning
-           here rather than falling through states that outcome explicitly --
-           the root was not covered, so its subtree still needs walking. */
         return false;
       }
+      if (covered) covered.add(root);
       return false;
     }
 
