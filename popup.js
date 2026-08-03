@@ -45,7 +45,7 @@
     queryActiveTab(function (tab) {
       /* Anchored match, not a substring: "nextwork.ai.example.com" contains the
          domain but is not it. */
-      onNextWork = /^https?:\/\/([^\/]*\.)?nextwork\.(ai|org)(\/|$|\?|#)/.test((tab && tab.url) || "");
+      onNextWork = /^https?:\/\/([^/]*\.)?nextwork\.(ai|org)(\/|$|\?|#)/.test(tab?.url || "");
       if (!onNextWork) return;
       go.classList.add("is-current");
       go.setAttribute("aria-disabled", "true");
@@ -66,7 +66,7 @@
        needs no equivalent -- it opens the tab with no opener to begin with. */
     function openHome() {
       try {
-        if (chrome.tabs && chrome.tabs.create) {
+        if (chrome.tabs?.create) {
           chrome.tabs.create({ url: HOME });
         } else {
           window.open(HOME, "_blank", "noopener");
@@ -85,7 +85,7 @@
     function finish(tabs) {
       if (done) return;
       done = true;
-      callback(tabs && tabs.length ? tabs[0] : null);
+      callback(tabs?.length ? tabs[0] : null);
     }
     var returned;
     try {
@@ -127,8 +127,7 @@
       chrome.storage.onChanged.addListener(function (changes, area) {
         if (area !== "local") return;
         var dirty = false;
-        for (var i = 0; i < KEYS.length; i++) {
-          var key = KEYS[i];
+        for (const key of KEYS) {
           if (!changes[key]) continue;
           var value = !!changes[key].newValue;
           /* A value equal to what is displayed is this popup's own write
@@ -148,8 +147,7 @@
 
   /* The authoritative read only fills in keys the user has not already set. */
   function adopt(values) {
-    for (var i = 0; i < KEYS.length; i++) {
-      var key = KEYS[i];
+    for (const key of KEYS) {
       if (!owned[key]) prefs[key] = values[key];
     }
     writeCache(prefs);

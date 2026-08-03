@@ -3,7 +3,7 @@
 chrome.commands.onCommand.addListener(function (command) {
   if (command !== "toggle-dark") return;
   get(function (result) {
-    set({ darkMode: !(result && result.darkMode) });
+    set({ darkMode: !result?.darkMode });
   });
 });
 
