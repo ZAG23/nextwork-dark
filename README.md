@@ -17,13 +17,13 @@ Any Chromium-based browser (Chrome, Edge, Brave, Arc, Orion):
 3. Select the repo folder.
 4. Open any nextwork.ai page and click the toolbar icon.
 
-**Orion note:** Orion caches an unpacked extension's manifest at install time. After pulling an update that changes `manifest.json`, **remove and re-add** the extension — disable/re-enable is not enough.
+**Orion note:** Orion caches all unpacked extension resources — manifest, scripts, stylesheets — and does not reload them on disable/re-enable. After pulling an update, **remove the extension from Tools → Extensions and re-add it from disk**. Measured: a stale `manifest.json` kept old permissions, and a stale `popup.css` kept the popup rendering in the old colour scheme even after the source was corrected. Disabling and re-enabling is not enough.
 
 ## Features
 
 - Warm dark theme for nextwork.ai and nextwork.org, matched to the site's own palette
 - **Dim Images** — softens images while dark mode is active, full brightness on hover
-- **Open NextWork** — jumps to the platform, and goes inert when you are already on it
+- **Open NextWork** — jumps to the platform (opens https://nextwork.ai in a new tab), and goes inert when you are already there. Uses an anchored domain regex (`/^https?:\/\/([^\/]*\.)?nextwork\.(ai|org)(\/|$|\?|#)/`) so `nextwork.ai.example.com` does not match. The tab's URL is readable because the extension holds `host_permissions` for these domains; on any other site the browser withholds it, and an unreadable URL is the signal to offer the button — no new permission needed.
 - Preferences persist across reloads, navigations, tabs and restarts
 - No flash of white on page load
 - Keyboard shortcut: `Cmd+Shift+D` / `Ctrl+Shift+D`

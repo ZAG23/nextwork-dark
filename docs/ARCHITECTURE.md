@@ -41,6 +41,10 @@ The sweep walks the DOM, computes luminance for each element's background (and e
 
 This matters more than it appears. The theme lightens *all* text, so any surface left light becomes light-on-light — worse than no theme. Measurement is the only approach that cannot silently miss one.
 
+The measurement sweep (content.js lines 173–289) computes the luminance of each element's background colour and any gradient stops. Luminance is calculated per ITU-R BT.709 as `0.2126 * red + 0.7152 * green + 0.0722 * blue`. Any element with luminance above the `LIGHT = 150` threshold (approximately 60% grey on a 0–255 scale) is tagged `data-nwd-lit` and repainted inline with `#272320` background. This catches arbitrary values (`bg-[#f0ebe9]`), semantic utilities, and gradients whose colour lives in `background-image`, not in a class name. A `MutationObserver` batched on `requestAnimationFrame` catches content that mounts after page load — reflection cards, expanded steps, popovers.
+
+The threshold of 150 was set by measuring NextWork's own light surfaces. The paper background `#f8f5f1` measures 242, cards `#f0e9e6` measure 235. A surface measuring 149 or below reads as already dark and is left alone.
+
 Two traps found the hard way:
 
 - **Substring selectors over-match.** `[class*="tip"]` matches `tiptap`, the editor root. That painted the whole content column as a callout, seaming it against the canvas. Short patterns use `[class~="..."]`.

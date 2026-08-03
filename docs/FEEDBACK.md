@@ -4,6 +4,8 @@ Findings from building the project as written, then debugging it to a working st
 
 Every claim below was verified empirically — headless Chrome driven over the DevTools Protocol, real synthesized mouse events, computed-style measurement. Where a number appears, it was measured. Nothing here is inferred from reading the code alone.
 
+**Update:** The regenerated project (Aug 2026) fixed 9 of 10 original defects. See [FOLLOWUP.md](FOLLOWUP.md) for second-pass findings.
+
 **Headline:** a learner who follows the project exactly ends up with an extension whose popup opens, whose toggle appears to do nothing, and which produces no error message anywhere. Three independent blocking defects each cause that same symptom, so fixing one does not reveal progress.
 
 And once those are fixed, a fourth issue surfaces that the project never mentions: published projects render through a Web Component library, and page CSS cannot reach inside a shadow root (defect 8b).
