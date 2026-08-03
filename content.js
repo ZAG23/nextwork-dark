@@ -172,6 +172,7 @@
      remaining ones are found by measurement and tagged for the sheet to style. */
   function sweepLightSurfaces() {
     var LIGHT = 150;
+    var SURFACE = "#272320";
     var scheduled = false;
 
     sweep = run;
@@ -183,10 +184,42 @@
     observeMutations();
 
     function luminance(color) {
-      var m = String(color).match(/(\d+(?:\.\d+)?)/g);
+      var s = String(color).trim();
+      /* Hex is handled here because SVG data-URIs spell their fills that way. */
+      var hex = s.match(/^#?([0-9a-fA-F]{6})$/);
+      if (hex) {
+        return 0.2126 * parseInt(hex[1].slice(0, 2), 16) +
+               0.7152 * parseInt(hex[1].slice(2, 4), 16) +
+               0.0722 * parseInt(hex[1].slice(4, 6), 16);
+      }
+      var m = s.match(/(\d+(?:\.\d+)?)/g);
       if (!m || m.length < 3) return null;
       if (m.length > 3 && parseFloat(m[3]) < 0.15) return null;
       return 0.2126 * +m[0] + 0.7152 * +m[1] + 0.0722 * +m[2];
+    }
+
+    /* Photographs and icon sprites must be left alone: blanking a real image is
+       a worse defect than the light panel this is chasing. Only vector sources,
+       whose colours are legible as text, are candidates. */
+    function isDecorativeImage(value) {
+      if (value.indexOf("gradient") !== -1) return false;
+      if (value.indexOf("svg+xml") !== -1) return false;
+      return true;
+    }
+
+    function imageColors(value) {
+      var out = [];
+      var fn = value.match(/rgba?\([^)]+\)/g);
+      if (fn) out = out.concat(fn);
+      /* decodeURIComponent because the SVG arrives percent-encoded, so its
+         fill="%23F0E9E6" is otherwise unreadable. */
+      var text = value;
+      try {
+        text = decodeURIComponent(value);
+      } catch (e) {}
+      var hexes = text.match(/#[0-9a-fA-F]{6}\b/g);
+      if (hexes) out = out.concat(hexes);
+      return out;
     }
 
     function run() {
@@ -221,8 +254,15 @@
        So the sheet genuinely cannot repaint these surfaces; only the element can. */
     function paint(el) {
       el.setAttribute("data-nwd-lit", "");
-      el.style.setProperty("background-color", "#272320", "important");
-      el.style.setProperty("background-image", "none", "important");
+      el.style.setProperty("background-color", SURFACE, "important");
+      /* Only vector fills are cleared. Blanking unconditionally destroyed a real
+         525x360 hero photograph, because the element carrying it also had a light
+         background-colour -- losing artwork is a worse defect than the light
+         panel this is chasing. */
+      var image = getComputedStyle(el).backgroundImage;
+      if (image && image !== "none" && !isDecorativeImage(image)) {
+        el.style.setProperty("background-image", "none", "important");
+      }
       darkenText(el);
     }
 
@@ -256,16 +296,21 @@
         paint(el);
         return;
       }
-      /* A gradient fading to the page's paper tone reads as a bright smear; the
-         colour lives in the image, not in background-color. */
+      /* A light background-IMAGE is invisible to every background-color rule.
+         Two shapes appear on this site: gradients fading to the paper tone, and
+         inline SVG data-URIs whose fill IS the panel -- the Secret Mission card
+         is one, an svg+xml URI filled #F0E9E6. Both are matched by pulling every
+         colour literal out of the value, rgb()/rgba() and bare hex alike. */
       var image = cs.backgroundImage;
-      if (image && image !== "none" && image.indexOf("gradient") !== -1) {
-        var stops = image.match(/rgba?\([^)]+\)/g) || [];
-        for (var i = 0; i < stops.length; i++) {
-          var l = luminance(stops[i]);
+      if (image && image !== "none" && !isDecorativeImage(image)) {
+        var literals = imageColors(image);
+        for (var i = 0; i < literals.length; i++) {
+          var l = luminance(literals[i]);
           if (l !== null && l > LIGHT) {
             el.style.setProperty("background-image", "none", "important");
+            el.style.setProperty("background-color", SURFACE, "important");
             el.setAttribute("data-nwd-lit", "");
+            darkenText(el);
             return;
           }
         }
