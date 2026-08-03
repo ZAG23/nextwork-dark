@@ -85,17 +85,21 @@
        full ~1000-root traversal on every DOM change to discover nothing new,
        which is what made scrolling feel heavy. */
     function adopt(root) {
-      if (covered && covered.has(root)) return true;
+      if (covered?.has(root)) return true;
       var sheets = root.adoptedStyleSheets;
       if (!sheets) return false;
-      if (sheets.indexOf(sheet) !== -1) {
+      if (sheets.includes(sheet)) {
         if (covered) covered.add(root);
         return true;
       }
       try {
         root.adoptedStyleSheets = sheets.concat(sheet);
         if (covered) covered.add(root);
-      } catch (e) {}
+      } catch (e) {
+        /* Swallowed deliberately: the write throws only for a root that is
+           closed or already detached, and neither becomes writable later. One
+           refusing root must not abort the traversal of the ~1000 others. */
+      }
       return false;
     }
 
@@ -114,24 +118,6 @@
       });
     }
 
-    /* Iterative rather than recursive: nesting can run deep and a blown stack
-       would abort the traversal partway, leaving half the page light.
-       fn returns true when its subtree is already handled and can be skipped;
-       returning nothing means keep descending. */
-    function walk(start, fn) {
-      var queue = [start];
-      while (queue.length) {
-        var node = queue.pop();
-        var hosts = node.querySelectorAll("*");
-        for (var i = 0; i < hosts.length; i++) {
-          var root = hosts[i].shadowRoot;
-          if (!root) continue;
-          if (fn(root)) continue;
-          queue.push(root);
-        }
-      }
-    }
-
     /* Components mount lazily -- expanding a step attaches dozens of new roots.
        Only the added subtrees are scanned, not the document: a keystroke in the
        editor should not cost a full traversal. */
@@ -139,10 +125,8 @@
       if (typeof MutationObserver !== "function") return;
       new MutationObserver(function (records) {
         if (!has("dark")) return;
-        for (var i = 0; i < records.length; i++) {
-          var added = records[i].addedNodes;
-          for (var j = 0; j < added.length; j++) {
-            var node = added[j];
+        for (const record of records) {
+          for (const node of record.addedNodes) {
             if (node.nodeType !== 1) continue;
             queued.push(node);
           }
@@ -157,11 +141,27 @@
       pending = false;
       var batch = queued;
       queued = [];
-      for (var i = 0; i < batch.length; i++) {
-        var node = batch[i];
+      for (const node of batch) {
         if (!node.isConnected) continue;
         if (node.shadowRoot) adopt(node.shadowRoot);
         walk(node, adopt);
+      }
+    }
+  }
+
+  /* Iterative rather than recursive: nesting can run deep and a blown stack
+     would abort the traversal partway, leaving half the page light.
+     fn returns true when its subtree is already handled and can be skipped;
+     returning nothing means keep descending. */
+  function walk(start, fn) {
+    var queue = [start];
+    while (queue.length) {
+      var node = queue.pop();
+      for (const host of node.querySelectorAll("*")) {
+        var root = host.shadowRoot;
+        if (!root) continue;
+        if (fn(root)) continue;
+        queue.push(root);
       }
     }
   }
@@ -185,67 +185,24 @@
     }
     observeMutations();
 
-    function luminance(color) {
-      var s = String(color).trim();
-      /* Hex is handled here because SVG data-URIs spell their fills that way. */
-      var hex = s.match(/^#?([0-9a-fA-F]{6})$/);
-      if (hex) {
-        return 0.2126 * parseInt(hex[1].slice(0, 2), 16) +
-               0.7152 * parseInt(hex[1].slice(2, 4), 16) +
-               0.0722 * parseInt(hex[1].slice(4, 6), 16);
-      }
-      var m = s.match(/(\d+(?:\.\d+)?)/g);
-      if (!m || m.length < 3) return null;
-      if (m.length > 3 && parseFloat(m[3]) < 0.15) return null;
-      return 0.2126 * +m[0] + 0.7152 * +m[1] + 0.0722 * +m[2];
-    }
-
-    /* Photographs and icon sprites must be left alone: blanking a real image is
-       a worse defect than the light panel this is chasing. Only vector sources,
-       whose colours are legible as text, are candidates. */
-    function isDecorativeImage(value) {
-      if (value.indexOf("gradient") !== -1) return false;
-      if (value.indexOf("svg+xml") !== -1) return false;
-      return true;
-    }
-
-    function imageColors(value) {
-      var out = [];
-      var fn = value.match(/rgba?\([^)]+\)/g);
-      if (fn) out = out.concat(fn);
-      /* decodeURIComponent because the SVG arrives percent-encoded, so its
-         fill="%23F0E9E6" is otherwise unreadable. */
-      var text = value;
-      try {
-        text = decodeURIComponent(value);
-      } catch (e) {}
-      var hexes = text.match(/#[0-9a-fA-F]{6}\b/g);
-      if (hexes) out = out.concat(hexes);
-      return out;
-    }
-
     function run() {
       if (!document.body) return;
       if (!has("dark")) {
         revert();
         return;
       }
-      var all = document.body.querySelectorAll("*");
-      for (var i = 0; i < all.length; i++) tag(all[i]);
+      for (const el of document.body.querySelectorAll("*")) tag(el);
     }
 
     /* Inline styles outlive the gate attribute, so turning dark mode off has to
        remove them explicitly or the page stays dark. */
     function revert() {
-      var painted = document.querySelectorAll("[data-nwd-lit]");
-      for (var i = 0; i < painted.length; i++) {
-        var el = painted[i];
-        el.removeAttribute("data-nwd-lit");
+      for (const el of document.querySelectorAll("[data-nwd-lit]")) {
+        delete el.dataset.nwdLit;
         el.style.removeProperty("background-color");
         el.style.removeProperty("background-image");
         el.style.removeProperty("color");
-        var kids = el.querySelectorAll("*");
-        for (var j = 0; j < kids.length; j++) kids[j].style.removeProperty("color");
+        for (const kid of el.querySelectorAll("*")) kid.style.removeProperty("color");
       }
     }
 
@@ -255,7 +212,7 @@
        measured: layered #d4f5e0 wins over our sheet, inline loses to nothing.
        So the sheet genuinely cannot repaint these surfaces; only the element can. */
     function paint(el) {
-      el.setAttribute("data-nwd-lit", "");
+      el.dataset.nwdLit = "";
       el.style.setProperty("background-color", SURFACE, "important");
       /* Only vector fills are cleared. Blanking unconditionally destroyed a real
          525x360 hero photograph, because the element carrying it also had a light
@@ -271,10 +228,8 @@
     /* Descendants were authored to sit on a light surface, so their own light or
        brand colours have to come back -- same layered-!important problem. */
     function darkenText(root) {
-      var kids = root.querySelectorAll("*");
-      for (var i = 0; i < kids.length; i++) {
-        var kid = kids[i];
-        if (kid.hasAttribute("data-nwd-lit")) continue;
+      for (const kid of root.querySelectorAll("*")) {
+        if ("nwdLit" in kid.dataset) continue;
         var kcs = getComputedStyle(kid);
         var bg = luminance(kcs.backgroundColor);
         /* A nested dark panel (the answer textarea) already reads correctly. */
@@ -291,7 +246,7 @@
     }
 
     function tag(el) {
-      if (el.hasAttribute("data-nwd-lit")) return;
+      if ("nwdLit" in el.dataset) return;
       var cs = getComputedStyle(el);
       var lum = luminance(cs.backgroundColor);
       if (lum !== null && lum > LIGHT) {
@@ -305,13 +260,12 @@
          colour literal out of the value, rgb()/rgba() and bare hex alike. */
       var image = cs.backgroundImage;
       if (image && image !== "none" && !isDecorativeImage(image)) {
-        var literals = imageColors(image);
-        for (var i = 0; i < literals.length; i++) {
-          var l = luminance(literals[i]);
+        for (const literal of imageColors(image)) {
+          var l = luminance(literal);
           if (l !== null && l > LIGHT) {
             el.style.setProperty("background-image", "none", "important");
             el.style.setProperty("background-color", SURFACE, "important");
-            el.setAttribute("data-nwd-lit", "");
+            el.dataset.nwdLit = "";
             darkenText(el);
             return;
           }
@@ -339,7 +293,7 @@
      which is the portable path across extension layers. Verify ours actually
      landed and inject it ourselves if the manifest's css key was ignored. */
   function ensureTheme() {
-    if (!chrome.runtime || !chrome.runtime.getURL) return;
+    if (!chrome.runtime?.getURL) return;
     check();
     document.addEventListener("DOMContentLoaded", check);
 
@@ -360,11 +314,11 @@
       if (document.getElementById("nwd-theme")) return true;
       var root = document.documentElement;
       if (!root) return false;
-      var had = root.hasAttribute("data-nwdark");
-      if (!had) root.setAttribute("data-nwdark", "on");
+      var had = "nwdark" in root.dataset;
+      if (!had) root.dataset.nwdark = "on";
       var scheme = getComputedStyle(root).getPropertyValue("color-scheme");
-      if (!had) root.removeAttribute("data-nwdark");
-      return scheme.indexOf("dark") !== -1;
+      if (!had) delete root.dataset.nwdark;
+      return scheme.includes("dark");
     }
   }
 
@@ -390,7 +344,7 @@
   }
 
   function has(word) {
-    return gate.split(" ").indexOf(word) !== -1;
+    return gate.split(" ").includes(word);
   }
 
   /* At document_start document.documentElement is null (measured: readyState
@@ -498,7 +452,51 @@
   function enableAnimation() {
     requestAnimationFrame(function () {
       var root = document.documentElement;
-      if (root) root.setAttribute("data-nwd-animate", "");
+      if (root) root.dataset.nwdAnimate = "";
     });
+  }
+
+  /* Hoisted out of sweepLightSurfaces: all three are pure functions of their
+     argument, so nesting them only rebuilt them on every call. */
+  function luminance(color) {
+    var s = String(color).trim();
+    /* Hex is handled here because SVG data-URIs spell their fills that way. */
+    var hex = /^#?([0-9a-fA-F]{6})$/.exec(s);
+    if (hex) {
+      return 0.2126 * Number.parseInt(hex[1].slice(0, 2), 16) +
+             0.7152 * Number.parseInt(hex[1].slice(2, 4), 16) +
+             0.0722 * Number.parseInt(hex[1].slice(4, 6), 16);
+    }
+    var m = s.match(/(\d+(?:\.\d+)?)/g);
+    if (!m || m.length < 3) return null;
+    if (m.length > 3 && Number.parseFloat(m[3]) < 0.15) return null;
+    return 0.2126 * +m[0] + 0.7152 * +m[1] + 0.0722 * +m[2];
+  }
+
+  /* Photographs and icon sprites must be left alone: blanking a real image is
+     a worse defect than the light panel this is chasing. Only vector sources,
+     whose colours are legible as text, are candidates. */
+  function isDecorativeImage(value) {
+    if (value.includes("gradient")) return false;
+    if (value.includes("svg+xml")) return false;
+    return true;
+  }
+
+  function imageColors(value) {
+    var out = [];
+    var fn = value.match(/rgba?\([^)]+\)/g);
+    if (fn) out = out.concat(fn);
+    /* decodeURIComponent because the SVG arrives percent-encoded, so its
+       fill="%23F0E9E6" is otherwise unreadable. */
+    var text = value;
+    try {
+      text = decodeURIComponent(value);
+    } catch (e) {
+      /* A malformed escape means the value is not percent-encoded, so the raw
+         string is already the readable form. */
+    }
+    var hexes = text.match(/#[0-9a-fA-F]{6}\b/g);
+    if (hexes) out = out.concat(hexes);
+    return out;
   }
 })();

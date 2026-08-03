@@ -214,6 +214,9 @@ body {
 .action.is-current .action__arrow { display: none; }
 
 .status {
+  /* <output> is inline by default; the divider rule and centring below both
+     assume the full-width box the <p> this replaced gave for free. */
+  display: block;
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--nwd-line-soft);
