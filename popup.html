@@ -38,7 +38,11 @@
     </li>
   </ul>
 
-  <button type="button" class="action" id="go">
+  <!-- The colours are also set inline. Orion caches an unpacked extension's
+       popup.css across reloads, and a stale copy without the .action rules falls
+       back to the browser's default white button -- in a dark-mode extension. -->
+  <button type="button" class="action" id="go"
+          style="background:#272320;color:#ede8e3;border:1px solid #46403b;">
     <span class="action__label" id="go-label">Open NextWork</span>
     <svg class="action__arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"
          stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"

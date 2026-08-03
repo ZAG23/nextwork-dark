@@ -50,6 +50,10 @@
       go.classList.add("is-current");
       go.setAttribute("aria-disabled", "true");
       label.textContent = "You're on NextWork";
+      /* Overrides the inline fallback colours, which a class cannot beat. */
+      go.style.background = "transparent";
+      go.style.color = "#9c928a";
+      go.style.borderColor = "#383330";
     });
 
     go.addEventListener("click", function () {
