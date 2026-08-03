@@ -27,6 +27,72 @@
   render();
   load();
   watchStorage();
+  setUpLauncher();
+
+  /* Opens nextwork.ai unless the active tab is already there. The tab's url is
+     only legible because the extension holds host_permissions for these domains;
+     for any other site the browser withholds it, and an unreadable url is itself
+     the answer -- not NextWork, so offer to open it. This is why the feature adds
+     no new permission. */
+  function setUpLauncher() {
+    var go = document.getElementById("go");
+    var label = document.getElementById("go-label");
+    if (!go) return;
+
+    var HOME = "https://nextwork.ai/";
+    var onNextWork = false;
+
+    queryActiveTab(function (tab) {
+      /* Anchored match, not a substring: "nextwork.ai.example.com" contains the
+         domain but is not it. */
+      onNextWork = /^https?:\/\/([^\/]*\.)?nextwork\.(ai|org)(\/|$|\?|#)/.test((tab && tab.url) || "");
+      if (!onNextWork) return;
+      go.classList.add("is-current");
+      go.setAttribute("aria-disabled", "true");
+      label.textContent = "You're on NextWork";
+    });
+
+    go.addEventListener("click", function () {
+      if (onNextWork) return;
+      openHome();
+    });
+
+    function openHome() {
+      try {
+        if (chrome.tabs && chrome.tabs.create) {
+          chrome.tabs.create({ url: HOME });
+        } else {
+          window.open(HOME, "_blank");
+        }
+      } catch (e) {
+        window.open(HOME, "_blank");
+      }
+      /* Chrome keeps the popup open after tabs.create; closing it matches what a
+         user expects from a navigation action. */
+      window.close();
+    }
+  }
+
+  function queryActiveTab(callback) {
+    var done = false;
+    function finish(tabs) {
+      if (done) return;
+      done = true;
+      callback(tabs && tabs.length ? tabs[0] : null);
+    }
+    var returned;
+    try {
+      returned = chrome.tabs.query({ active: true, currentWindow: true }, finish);
+    } catch (e) {
+      finish(null);
+      return;
+    }
+    if (returned && typeof returned.then === "function") {
+      returned.then(finish, function () {
+        finish(null);
+      });
+    }
+  }
 
   /* Writes only the key that changed. A whole-object write would republish this
      popup's possibly stale value for the key the user never touched. */

@@ -154,6 +154,65 @@ body {
 .row.disabled .switch__text { opacity: 0.4; }
 .row.disabled .switch__control { opacity: 0.4; }
 
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--nwd-line);
+  border-radius: 9px;
+  background: var(--nwd-surface);
+  color: var(--nwd-text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.action:hover {
+  background: var(--nwd-raised);
+  border-color: #554e48;
+}
+
+.action:focus-visible,
+.action:focus {
+  outline: 2px solid var(--nwd-accent);
+  outline-offset: 2px;
+}
+
+.action__arrow {
+  flex: none;
+  opacity: 0.65;
+  -webkit-transition: -webkit-transform 0.15s ease;
+  transition: transform 0.15s ease;
+}
+
+.action:hover .action__arrow {
+  -webkit-transform: translateX(2px);
+  transform: translateX(2px);
+}
+
+/* When the tab is already NextWork the button becomes a no-op, so it reads as
+   inert rather than inviting a pointless click. */
+.action.is-current {
+  cursor: default;
+  color: var(--nwd-muted);
+  background: transparent;
+  border-color: var(--nwd-line-soft);
+}
+
+.action.is-current:hover {
+  background: transparent;
+  border-color: var(--nwd-line-soft);
+}
+
+.action.is-current .action__arrow { display: none; }
+
 .status {
   margin-top: 12px;
   padding-top: 12px;
