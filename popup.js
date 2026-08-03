@@ -160,9 +160,15 @@
     /* Explicit class rather than :has() on the parent, which older WebKit does
        not support. */
     dimRow.className = prefs.darkMode ? "row" : "row disabled";
-    status.textContent = prefs.darkMode
-      ? prefs.dimImages ? "Dark mode on, images dimmed" : "Dark mode on"
-      : "Dark mode off";
+    status.textContent = statusText();
+  }
+
+  /* Dimming is only meaningful while dark mode is on, so the off state is
+     reported on its own rather than as a combination. */
+  function statusText() {
+    if (!prefs.darkMode) return "Dark mode off";
+    if (prefs.dimImages) return "Dark mode on, images dimmed";
+    return "Dark mode on";
   }
 
   function normalize(result) {
