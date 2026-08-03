@@ -76,7 +76,9 @@ html[data-nwdark="on"] [class*="gap-x-12"] {
 
 /* Headings never take a background. Tailwind's flex utilities include
    "content-center", which [class*="content"] matched -- that painted the page
-   title as an opaque block sitting proud of the canvas. */
+   title as an opaque block sitting proud of the canvas. The class-based surface
+   rules below outrank this one on specificity (two attribute selectors to one),
+   so they still repaint a heading that genuinely names a light background. */
 html[data-nwdark="on"] h1,
 html[data-nwdark="on"] h2,
 html[data-nwdark="on"] h3,
@@ -84,6 +86,7 @@ html[data-nwdark="on"] h4,
 html[data-nwdark="on"] h5,
 html[data-nwdark="on"] h6 {
   background-color: transparent !important;
+  color: var(--nwd-text) !important;
 }
 
 /* Only classes that NAME a light background get a surface. Guessing from
@@ -125,15 +128,6 @@ html[data-nwdark="on"] [class*="dropdown"] {
   background-color: var(--nwd-raised) !important;
   border-color: var(--nwd-line) !important;
   color: var(--nwd-body) !important;
-}
-
-html[data-nwdark="on"] h1,
-html[data-nwdark="on"] h2,
-html[data-nwdark="on"] h3,
-html[data-nwdark="on"] h4,
-html[data-nwdark="on"] h5,
-html[data-nwdark="on"] h6 {
-  color: var(--nwd-text) !important;
 }
 
 /* div is included because NextWork's editor emits body copy as bare
