@@ -23,6 +23,7 @@ Any Chromium-based browser (Chrome, Edge, Brave, Arc, Orion):
 
 - Warm dark theme for nextwork.ai and nextwork.org, matched to the site's own palette
 - **Dim Images** — softens images while dark mode is active, full brightness on hover
+- **Open NextWork** — jumps to the platform, and goes inert when you are already on it
 - Preferences persist across reloads, navigations, tabs and restarts
 - No flash of white on page load
 - Keyboard shortcut: `Cmd+Shift+D` / `Ctrl+Shift+D`
