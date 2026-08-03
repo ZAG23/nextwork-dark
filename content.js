@@ -28,6 +28,8 @@
   function pierceShadowRoots() {
     var sheet = null;
     var pending = false;
+    var covered = typeof WeakSet === "function" ? new WeakSet() : null;
+    var queued = [];
 
     build();
     run();
@@ -78,28 +80,42 @@
       walk(document, adopt);
     }
 
+    /* Roots already carrying the sheet are remembered, so a re-scan skips their
+       whole subtree instead of re-walking it. Without this the observer paid the
+       full ~1000-root traversal on every DOM change to discover nothing new,
+       which is what made scrolling feel heavy. */
     function adopt(root) {
+      if (covered && covered.has(root)) return true;
       var sheets = root.adoptedStyleSheets;
-      if (!sheets || sheets.indexOf(sheet) !== -1) return;
+      if (!sheets) return false;
+      if (sheets.indexOf(sheet) !== -1) {
+        if (covered) covered.add(root);
+        return true;
+      }
       try {
         root.adoptedStyleSheets = sheets.concat(sheet);
+        if (covered) covered.add(root);
       } catch (e) {}
+      return false;
     }
 
     function release() {
+      covered = typeof WeakSet === "function" ? new WeakSet() : null;
       walk(document, function (root) {
         var sheets = root.adoptedStyleSheets;
-        if (!sheets) return;
+        if (!sheets) return false;
         var i = sheets.indexOf(sheet);
-        if (i === -1) return;
+        if (i === -1) return false;
         try {
           root.adoptedStyleSheets = sheets.slice(0, i).concat(sheets.slice(i + 1));
         } catch (e) {}
+        return false;
       });
     }
 
     /* Iterative rather than recursive: nesting can run deep and a blown stack
-       would abort the traversal partway, leaving half the page light. */
+       would abort the traversal partway, leaving half the page light.
+       fn returns true when its subtree is already handled and can be skipped. */
     function walk(start, fn) {
       var queue = [start];
       while (queue.length) {
@@ -108,24 +124,43 @@
         for (var i = 0; i < hosts.length; i++) {
           var root = hosts[i].shadowRoot;
           if (!root) continue;
-          fn(root);
+          if (fn(root)) continue;
           queue.push(root);
         }
       }
     }
 
     /* Components mount lazily -- expanding a step attaches dozens of new roots.
-       Batched on rAF because the editor mutates on every keystroke. */
+       Only the added subtrees are scanned, not the document: a keystroke in the
+       editor should not cost a full traversal. */
     function watchForNewRoots() {
       if (typeof MutationObserver !== "function") return;
-      new MutationObserver(function () {
-        if (pending) return;
+      new MutationObserver(function (records) {
+        if (!has("dark")) return;
+        for (var i = 0; i < records.length; i++) {
+          var added = records[i].addedNodes;
+          for (var j = 0; j < added.length; j++) {
+            var node = added[j];
+            if (node.nodeType !== 1) continue;
+            queued.push(node);
+          }
+        }
+        if (!queued.length || pending) return;
         pending = true;
-        requestAnimationFrame(function () {
-          pending = false;
-          run();
-        });
+        requestAnimationFrame(flush);
       }).observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    function flush() {
+      pending = false;
+      var batch = queued;
+      queued = [];
+      for (var i = 0; i < batch.length; i++) {
+        var node = batch[i];
+        if (!node.isConnected) continue;
+        if (node.shadowRoot) adopt(node.shadowRoot);
+        walk(node, adopt);
+      }
     }
   }
 
