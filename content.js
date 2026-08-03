@@ -96,9 +96,12 @@
         root.adoptedStyleSheets = sheets.concat(sheet);
         if (covered) covered.add(root);
       } catch (e) {
-        /* Swallowed deliberately: the write throws only for a root that is
-           closed or already detached, and neither becomes writable later. One
-           refusing root must not abort the traversal of the ~1000 others. */
+        /* Not rethrown: the write throws only for a root that is closed or
+           already detached, and neither becomes writable later. One refusing
+           root must not abort the traversal of the ~1000 others. Returning
+           here rather than falling through states that outcome explicitly --
+           the root was not covered, so its subtree still needs walking. */
+        return false;
       }
       return false;
     }
