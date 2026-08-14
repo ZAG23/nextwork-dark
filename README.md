@@ -2,7 +2,7 @@
 
 A dark mode extension for the [NextWork](https://nextwork.ai) learning platform. Manifest V3, no build step, no dependencies.
 
-> **Unofficial.** Community-built by a NextWork Build Master. Not an official NextWork product — please report issues here rather than to NextWork support.
+> **Unofficial.** Community-built by a NextWork Build Master, published with NextWork's permission. Not an official NextWork product — please report issues here rather than to NextWork support.
 
 The theme derives its palette from NextWork's own light theme rather than applying a generic dark filter. Sampling the live site shows every surface and text colour is warm (red > green > blue): paper `#f8f5f1`, cards `#f0e9e6`, body copy `#443e3a`. The dark tones invert that same hue family, so the site still reads as itself.
 
@@ -36,7 +36,7 @@ before reloading the Firefox build. This just copies files — no bundler, no de
 3. Select `firefox/manifest.json`.
 4. Open any nextwork.ai page and click the toolbar icon.
 
-This is a temporary install — Firefox unloads it on restart, and reloading picks up file changes immediately (no cache to fight, unlike Orion). Requires Firefox 109+. For a permanent install you'd need to sign it through [addons.mozilla.org](https://addons.mozilla.org/developers/) (self-distributed or listed); the `browser_specific_settings.gecko.id` in `firefox/manifest.json` is a placeholder and should be replaced with your own before doing that.
+This is a temporary install — Firefox unloads it on restart, and reloading picks up file changes immediately (no cache to fight, unlike Orion). Requires Firefox 109+. A permanent install needs signing through [addons.mozilla.org](https://addons.mozilla.org/developers/); see [`docs/STORE-SUBMISSION.md`](docs/STORE-SUBMISSION.md). If you are forking this rather than installing it, change `browser_specific_settings.gecko.id` in `firefox/manifest.json` — AMO permanently binds the first ID it sees to that listing.
 
 ## Features
 
@@ -66,6 +66,12 @@ Three design decisions are load-bearing:
 **Inline styles for what CSS cannot win.** NextWork's Tailwind declares `!important` inside `@layer`, and a layered `!important` beats an unlayered one regardless of selector specificity. A stylesheet genuinely cannot repaint those surfaces. `content.js` measures computed colours, finds anything still light, and writes `element.style` directly.
 
 **Measurement instead of class-name guessing.** Surfaces are found by reading computed colour, not by matching class names. NextWork uses Tailwind arbitrary values (`bg-[#f0ebe9]`), semantic utilities that carry no colour in the class string, and gradients whose colour lives in the background image. None are addressable by selector. This matters more than it sounds: the theme lightens *all* text, so every surface missed becomes light-on-light — worse than no theme at all.
+
+## Publishing
+
+`./scripts/package.sh` builds the Chrome Web Store and addons.mozilla.org upload zips into
+`dist/`. [`docs/STORE-SUBMISSION.md`](docs/STORE-SUBMISSION.md) has the listing copy,
+permission justifications, reviewer notes and the open naming question.
 
 ## Provenance
 
