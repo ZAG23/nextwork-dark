@@ -6,3 +6,6 @@ nightshift-backup/
 
 .DS_Store
 *.log
+
+# Store upload zips, rebuilt by scripts/package.sh
+dist/
