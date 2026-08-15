@@ -59,9 +59,21 @@ publisher account.
   the popup reads the active tab's URL to decide whether the "Open NextWork" button is useful
   or should go inert. No other host is requested.
 
-**Data usage disclosures:** tick nothing. The extension collects and transmits no user data,
-so no privacy policy URL is required. Certify that data is not sold, not used for unrelated
-purposes, and not used for creditworthiness or lending.
+**Data usage disclosures:** tick nothing in the collection list. Certify all three: data is
+not sold, not used for unrelated purposes, and not used for creditworthiness or lending.
+
+**Privacy policy URL — required.** The dashboard marks this field mandatory even for an
+extension that collects nothing; the sidebar copy saying a policy is needed "if it collects
+user data" does not match what the form actually enforces. [`docs/PRIVACY.md`](PRIVACY.md) is
+the policy. Paste:
+
+```
+https://github.com/ZAG23/nextwork-dark/blob/main/docs/PRIVACY.md
+```
+
+The URL has to be publicly reachable, so it must point at `main` on the public repo — a
+branch URL breaks once the branch is deleted, and a private repo returns 404 to the reviewer,
+which fails the submission.
 
 **Remote code:** answer "No, I am not using remote code." All JavaScript is in the package —
 no `eval`, no `new Function`, no injected `<script>`, no network requests.
@@ -164,7 +176,9 @@ which is a large part of why the sync stays a plain `cp` rather than anything cl
 > 109–141 including ESR 140, and a "collects nothing" declaration has no consent prompt for
 > an older browser to fail to show. Happy to raise it if you would prefer.
 
-**Privacy policy:** none needed — declare that no data is collected.
+**Privacy policy:** AMO does not require one — declare that no data is collected. The policy
+at [`docs/PRIVACY.md`](PRIVACY.md) exists for Chrome, which does require a URL, and can be
+linked here too if a reviewer asks.
 
 **Validation.** `npx --yes web-ext@latest lint --source-dir=./firefox` runs Mozilla's own
 validator, the same one AMO runs on upload. Current state: **0 errors, 2 warnings**, both the
