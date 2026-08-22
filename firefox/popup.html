@@ -9,14 +9,30 @@
   <h1 class="title"><img class="mark" src="icons/icon32.png" alt="" width="18" height="18">NextWork Dark</h1>
 
   <ul class="rows">
-    <li class="row" id="dark-row">
+    <li class="row" id="system-row">
+      <label class="switch" for="system-toggle">
+        <span class="switch__text">
+          <span class="switch__name">System Theme</span>
+          <span class="switch__hint" id="system-hint">Follow your device's light or dark setting</span>
+        </span>
+        <span class="switch__control">
+          <input type="checkbox" id="system-toggle" class="switch__input" aria-describedby="system-hint">
+          <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
+        </span>
+      </label>
+    </li>
+
+    <!-- Ships restricted for the same reason as Dim Images below: System Theme
+         defaults on, and render() only ever relaxes this, so there is no
+         window in which Dark Mode is clickable while the system owns it. -->
+    <li class="row disabled" id="dark-row">
       <label class="switch" for="dark-toggle">
         <span class="switch__text">
           <span class="switch__name">Dark Mode</span>
           <span class="switch__hint" id="dark-hint">Theme nextwork.ai and .org pages</span>
         </span>
         <span class="switch__control">
-          <input type="checkbox" id="dark-toggle" class="switch__input" aria-describedby="dark-hint">
+          <input type="checkbox" id="dark-toggle" class="switch__input" aria-describedby="dark-hint" disabled>
           <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
         </span>
       </label>

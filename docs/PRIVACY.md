@@ -13,12 +13,17 @@ the author cannot see it.
 
 ## What is stored, and where
 
-Two settings, both of which you control from the extension's popup:
+Three settings, all of which you control from the extension's popup:
 
 | Setting | Value |
 | --- | --- |
+| System Theme | on or off |
 | Dark Mode | on or off |
 | Dim Images | on or off |
+
+System Theme means the extension follows your device's own light/dark appearance
+setting. It reads that setting through a standard CSS media query — the same one any
+website can read — and stores nothing extra about it.
 
 These are stored on your own computer, in your browser's extension storage
 (`chrome.storage.local`). The Dark Mode setting is additionally mirrored into `localStorage`
@@ -29,13 +34,13 @@ on every page load.
 That is the complete list. No browsing history, no page contents, no personal information, no
 identifiers, and no usage statistics are stored, read for any other purpose, or sent anywhere.
 
-If your browser is signed in and syncing extension data, your browser may sync these two
+If your browser is signed in and syncing extension data, your browser may sync these three
 settings between your own devices. That is handled entirely by your browser, not by this
 extension, and the settings still never reach the author or any third party.
 
 ## Permissions, and why they exist
 
-- **`storage`** — to remember the two settings above between page loads, tabs and restarts.
+- **`storage`** — to remember the three settings above between page loads, tabs and restarts.
 - **Access to `nextwork.ai` and `nextwork.org` (and their subdomains)** — the extension
   restyles these pages, which requires running on them. The popup also checks whether the tab
   you are looking at is a NextWork page, so its "Open NextWork" button can go inert when you

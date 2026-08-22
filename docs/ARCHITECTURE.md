@@ -91,7 +91,26 @@ The switch container is a `<label>`, and the checkbox is full-size and topmost (
 
 No border-radius on the input: a radius on a transparent full-size input makes corner hit-tests fall through to the parent. The radius lives on the visible track.
 
-State is read synchronously from the `localStorage` cache so the popup paints correct immediately — there is no async window in which a switch shows a value the user then clicks against, and therefore no need for a read timeout. Ownership is tracked *per key*, so a late storage read cannot clobber a click the user made while it was in flight.
+State is read synchronously from the `localStorage` cache so the popup paints correct immediately — there is no async window in which a switch shows a value the user then clicks against, and therefore no need for a read timeout. Ownership is tracked *per key*, so a late storage read cannot clobber a click the user made while it was in flight. The system-theme resolution deliberately writes through `storageSet` rather than `set()`: it is a resolution, not a click, so it must not claim ownership.
+
+Rows that another toggle controls ship *restricted* in `popup.html` — `class="row disabled"` plus a `disabled` input — and `render()` only ever relaxes them. This holds for Dim Images (owned by Dark Mode) and for Dark Mode itself (owned by System Theme, which defaults on), so there is no window before first render in which either is clickable when it should not be.
+
+### Following the system theme
+
+`systemTheme` is on by default and makes the extension track the OS appearance setting. The rule that keeps this from spreading is:
+
+> **`darkMode` always holds the *effective* dark state. `systemTheme` only says who owns it.**
+
+Whichever context can see the media query — the popup, and every content script; both have `matchMedia` — resolves `prefers-color-scheme` and writes the result back into `darkMode` whenever it differs. Everything downstream is therefore unchanged: `content.js`'s `encode()`, the `nwd.gate` mirror, the popup's Dim Images gating, and the service worker's blind flip all still read one key.
+
+That write-back is what makes the keyboard shortcut correct on its *first* press. An MV3 worker has no `matchMedia`, so it cannot resolve the OS setting itself; it flips `darkMode` and clears `systemTheme` in a single `set()`, which inverts what the user is actually looking at only because `darkMode` was already the effective value.
+
+Two things this design is avoiding:
+
+- **The media query must not go in `theme.css`.** The root block sets `color-scheme: dark`, and `themePresent()` probes exactly that property to decide whether the stylesheet loaded at all. Wrapping it in `@media (prefers-color-scheme: dark)` would report "not loaded" on every light-mode machine, and `ensureTheme()` would inject a duplicate `<link id="nwd-theme">`. System preference is resolved in JS only.
+- **`chrome.storage.onChanged` never fires for an OS theme change.** Both the popup and `content.js` register their own `change` listener on the `MediaQueryList`, with an `addListener` fallback for WebKit builds predating `MediaQueryList extends EventTarget`.
+
+`systemTheme` is also the one key that defaults *on*, so it cannot be coerced with `!!` like the others — only an explicitly stored `false` turns it off.
 
 ## The launcher button
 
@@ -105,7 +124,24 @@ This is why the feature adds no new permission. The dual-shape `chrome.tabs.quer
 
 ## The service worker
 
-Handles the keyboard command. Nothing else. Dark mode works whether or not it is running — MV3 workers are designed to be evicted, so anything user-visible that depends on one is a latent failure.
+Handles the keyboard command. Nothing else. The command turns `systemTheme` off and flips `darkMode`, so the shortcut is an escape hatch from system tracking rather than a no-op while it is on. Dark mode works whether or not it is running — MV3 workers are designed to be evicted, so anything user-visible that depends on one is a latent failure.
+
+### The toolbar icon
+
+The mark is an alpha-mask glyph in a single warm off-white (`#F8F5F1`); the shape lives entirely in the alpha channel, so on a light toolbar it is close to invisible. `icons/icon{16,32}-dark.png` are the dark-ink counterparts — a pure RGB substitution with the alpha preserved, recoloured per size rather than downscaled from the 128, because each size is independently hand-antialiased.
+
+The two browsers are not equally capable here, and the asymmetry is the whole design:
+
+- **Firefox detects it properly.** `theme_icons` in `firefox/manifest.json` is resolved by the browser against the active theme, third-party themes included. No JS.
+- **Chrome cannot detect it at all.** There is no API for the toolbar's background colour, and `theme_icons` is unimplemented. `prefers-color-scheme` is the only lever, and it reports the *OS* setting, not the toolbar — a custom Chrome theme can defeat it. This is a knowingly approximate answer to a question Chrome does not expose.
+
+So `background.js` opts out when the manifest declares `theme_icons`, using the key's presence as the build marker — `sync-firefox.sh` copies that file verbatim and cannot fork it. Overriding Firefox's real detection with Chrome's guess would be a downgrade.
+
+**The `theme_icons` polarity is a footgun.** The keys name the theme's *text* colour, not the icon's: `"dark"` displays under a dark-text theme (Firefox Light — a light toolbar) and so points at the dark-ink file, while `"light"` displays under a light-text theme (Firefox Dark) and points at the off-white one. The names coincide with the icon's own ink, which is why `icon16-dark.png` on the `"dark"` key reads correctly. Inverting it produces an invisible icon in exactly the case being fixed.
+
+On Chrome the value reaches the worker as `systemDark` in `chrome.storage.local`. That key is a **cache, not a preference** — it stays out of the popup's `KEYS`/`owned`/`normalize()` machinery and never passes through `adopt()`. `popup.js` and `content.js` both publish it, and the popup additionally calls `setIcon` itself: it is an extension page with full `chrome.action` access, so that path never involves the worker and holds even if a storage event fails to revive it. The worker's listener is an optimisation on top, covering an OS flip while a NextWork tab is open, and `onStartup`/`onInstalled` cover a browser restart dropping the session icon.
+
+Between install and the first `setIcon`, Chrome shows `default_icon` — the off-white file — which is wrong on a light toolbar. The only real fix for that window is an icon with an opaque background, which would remove the need for variants altogether.
 
 ## Testing and contributing
 
@@ -126,4 +162,6 @@ To test clickability you must synthesize real mouse events with `Input.dispatchM
 - **Never paint an element the site left transparent.** Inferring a surface from a structural word like `card` or `container` invents a background the site never had. The editor column is `rgba(0,0,0,0)` by design; painting it creates a visible seam.
 - **Short substring selectors over-match.** `[class*="tip"]` matches `tiptap`, the editor root, painting the entire content column as a callout. Use `[class~="..."]` for short patterns, or measure with `getComputedStyle` rather than matching class names.
 - **No new build step or dependencies.** The extension is plain JS with no bundler, so it works in any Chromium browser including WebKit-derived layers with partial MV3 support.
+- **Do not let `background.js` call `setIcon` on the Firefox build.** It would replace `theme_icons`' real theme detection with a `prefers-color-scheme` guess, silently, and only on themes whose polarity disagrees with the OS.
+- **`darkMode` is the effective state, not the user's manual choice.** Any new consumer should read that one key. Reintroducing a "manual value plus a system override" split puts the resolution in three places and breaks the service worker, which cannot resolve it at all.
 - **Do not weaken the gate attribute or break the toggle.** Both are verified working: the toggle passes real-mouse-click tests at centre, all four edges, and both corners, under promise / callback-only / throwing `chrome` stubs.

@@ -313,6 +313,33 @@ html[data-nwdark="on"] [class*="docs-hero"] {
   background-color: transparent !important;
 }
 
+/* Published project pages ("documentation themes") paint a full-bleed photo
+   backdrop -- skylight-bg.webp and one per theme -- from an INLINE style on
+   .docs-panel-layout, with a tiled pattern <img> fixed over it. content.js
+   deliberately leaves photographs alone (blanking a real image is the worse
+   defect), so this one survived every measurement pass and left the page ground
+   light beneath correctly darkened cards. Only the class says "backdrop rather
+   than content", so it has to be named. A sheet !important outranks an inline
+   declaration that carries none, which is why no JS is needed here. */
+html[data-nwdark="on"] [class*="docs-panel-layout"] {
+  background-image: none !important;
+  background-color: var(--nwd-canvas) !important;
+}
+
+/* The pattern is a real <img>, so no background rule reaches it and dim-images
+   is optional. Kept at a whisper rather than removed: it is the only texture on
+   an otherwise flat page, and works whether its strokes are light or dark. */
+html[data-nwdark="on"] [class*="docs-background-svg"] {
+  opacity: 0.05 !important;
+}
+
+/* The share/watermark pills and hero chrome are ringed in a light brand tint
+   that no border-white/paper selector names. */
+html[data-nwdark="on"] [class*="border-information"],
+html[data-nwdark="on"] [class*="border-brand-2"] {
+  border-color: var(--nwd-line-soft) !important;
+}
+
 /* Tailwind arbitrary-value classes such as bg-[#f0ebe9] name no palette token,
    so they cannot be matched by a bg-white/bg-paper selector. Matching the
    bracket itself is the only way to reach them. */

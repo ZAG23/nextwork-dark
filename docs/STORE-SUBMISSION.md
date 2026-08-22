@@ -50,8 +50,8 @@ publisher account.
 
 **Permission justifications** — each permission gets its own box in the dashboard:
 
-- `storage` — Stores two user preferences (dark mode on/off, dim images on/off) on the
-  device. A `localStorage` mirror is read synchronously at `document_start` because it is the
+- `storage` — Stores three user preferences (follow system theme on/off, dark mode on/off,
+  dim images on/off) on the device. A `localStorage` mirror is read synchronously at `document_start` because it is the
   only storage readable before first paint, which is what prevents a flash of white on load.
   Nothing is transmitted anywhere.
 - `host_permissions` for `nextwork.ai` / `nextwork.org` and their subdomains — These are the
@@ -111,6 +111,7 @@ A dark theme for the NextWork learning platform that keeps the site looking like
 
 <ul>
 <li>Themes nextwork.ai and nextwork.org, including subdomains</li>
+<li><strong>System Theme</strong> — on by default; follows your device's own light/dark setting, or turn it off to choose yourself</li>
 <li><strong>Dim Images</strong> — softens images while dark mode is on, full brightness on hover</li>
 <li>No flash of white on page load</li>
 <li>Preferences persist across reloads, tabs and restarts</li>
@@ -118,7 +119,7 @@ A dark theme for the NextWork learning platform that keeps the site looking like
 <li>Fully keyboard accessible</li>
 </ul>
 
-<strong>No accounts, no tracking, no network requests.</strong> The only stored data is your two toggle settings, kept on your own device.
+<strong>No accounts, no tracking, no network requests.</strong> The only stored data is your three toggle settings, kept on your own device.
 
 Open source under the MIT licence: <a href="https://github.com/ZAG23/nextwork-dark">github.com/ZAG23/nextwork-dark</a>
 
@@ -228,13 +229,15 @@ the wording changes.
 > that same hue family instead of flattening it to grey.
 >
 > • Themes nextwork.ai and nextwork.org, including subdomains
+> • System Theme — on by default; follows your device's own light/dark setting, or turn it
+>   off to choose yourself
 > • Dim Images — softens images while dark mode is on, full brightness on hover
 > • No flash of white on page load
 > • Preferences persist across reloads, tabs and restarts
 > • Keyboard shortcut: Cmd+Shift+D (Ctrl+Shift+D on Windows and Linux)
 > • Fully keyboard accessible
-> • No accounts, no tracking, no network requests — the only stored data is your two toggle
->   settings, kept on your own device
+> • No accounts, no tracking, no network requests — the only stored data is your three
+>   toggle settings, kept on your own device
 >
 > Open source under the MIT licence: https://github.com/ZAG23/nextwork-dark
 > The NextWork name and logo belong to NextWork.

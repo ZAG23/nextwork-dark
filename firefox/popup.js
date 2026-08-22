@@ -1,16 +1,22 @@
 (function () {
-  var KEYS = ["darkMode", "dimImages"];
+  var KEYS = ["darkMode", "dimImages", "systemTheme"];
   var CACHE = "nwd.popup";
 
+  var system = document.getElementById("system-toggle");
   var dark = document.getElementById("dark-toggle");
   var dim = document.getElementById("dim-toggle");
+  var darkRow = document.getElementById("dark-row");
   var dimRow = document.getElementById("dim-row");
   var status = document.getElementById("status");
 
   var prefs = readCache();
   /* Per key, not global: a click on one switch must outrank an older read of
      that key while still letting the read supply the other key's real value. */
-  var owned = { darkMode: false, dimImages: false };
+  var owned = { darkMode: false, dimImages: false, systemTheme: false };
+
+  system.addEventListener("change", function () {
+    set("systemTheme", system.checked);
+  });
 
   dark.addEventListener("change", function () {
     set("darkMode", dark.checked);
@@ -27,6 +33,8 @@
   render();
   load();
   watchStorage();
+  watchSystem();
+  publishSystemDark();
   setUpLauncher();
 
   /* Opens nextwork.ai unless the active tab is already there. The tab's url is
@@ -154,8 +162,90 @@
     render();
   }
 
+  /* The OS preference is not a stored pref, so nothing else would notice it
+     moving: chrome.storage.onChanged never fires for it. addListener is the
+     pre-EventTarget MediaQueryList shape, which older WebKit is stuck on. */
+  function watchSystem() {
+    var query = mediaQuery();
+    if (!query) return;
+    if (query.addEventListener) query.addEventListener("change", onSystemChange);
+    else if (query.addListener) query.addListener(onSystemChange);
+  }
+
+  function onSystemChange() {
+    render();
+    publishSystemDark();
+  }
+
+  /* Deliberately separate from syncSystem(), which returns early when System
+     Theme is off: the toolbar icon tracks the OS regardless of who owns the
+     page theme. systemDark is a cache for the service worker, not a preference,
+     so it stays out of KEYS/owned/normalize and never goes through adopt().
+
+     The popup is an extension page, so it can call setIcon itself -- that path
+     never involves the worker, and is what makes the icon correct even if a
+     storage event fails to revive it. On Firefox the worker owns nothing here
+     and theme_icons resolves the icon, so this build must not override it. */
+  function publishSystemDark() {
+    var os = systemDark();
+    storageSet({ systemDark: os });
+    if (themeIconsBuild()) return;
+    var suffix = os ? "" : "-dark";
+    try {
+      var returned = chrome.action.setIcon({
+        path: {
+          16: "icons/icon16" + suffix + ".png",
+          32: "icons/icon32" + suffix + ".png"
+        }
+      }, function () {});
+      if (returned && typeof returned.then === "function") {
+        returned.then(null, function () {});
+      }
+    } catch (e) {}
+  }
+
+  function themeIconsBuild() {
+    try {
+      return !!chrome.runtime.getManifest().action?.theme_icons;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function mediaQuery() {
+    try {
+      return window.matchMedia("(prefers-color-scheme: dark)");
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function systemDark() {
+    var query = mediaQuery();
+    return !!(query && query.matches);
+  }
+
+  /* darkMode carries the EFFECTIVE state, which is what lets content.js, this
+     popup and the keyboard shortcut all keep reading one key -- systemTheme
+     only says who owns it. Writes through storageSet rather than set(): this is
+     a resolution, not a click, so it must not claim ownership of the key. */
+  function syncSystem() {
+    if (!prefs.systemTheme) return;
+    var os = systemDark();
+    if (os === prefs.darkMode) return;
+    prefs.darkMode = os;
+    writeCache(prefs);
+    storageSet({ darkMode: os });
+  }
+
   function render() {
+    /* Ahead of the reads below, and never calls render itself, so the equality
+       guard inside is all that keeps this from recursing. */
+    syncSystem();
+    system.checked = prefs.systemTheme;
     dark.checked = prefs.darkMode;
+    dark.disabled = prefs.systemTheme;
+    darkRow.className = prefs.systemTheme ? "row disabled" : "row";
     dim.checked = prefs.dimImages;
     dim.disabled = !prefs.darkMode;
     /* Explicit class rather than :has() on the parent, which older WebKit does
@@ -167,20 +257,27 @@
   /* Dimming is only meaningful while dark mode is on, so the off state is
      reported on its own rather than as a combination. */
   function statusText() {
-    if (!prefs.darkMode) return "Dark mode off";
-    if (prefs.dimImages) return "Dark mode on, images dimmed";
-    return "Dark mode on";
+    var base = "Dark mode on";
+    if (!prefs.darkMode) base = "Dark mode off";
+    else if (prefs.dimImages) base = "Dark mode on, images dimmed";
+    return prefs.systemTheme ? base + " (system)" : base;
   }
 
+  /* systemTheme is the one key that defaults ON, so it cannot be coerced with
+     !! like the others -- only an explicit stored false turns it off. */
   function normalize(result) {
-    return { darkMode: !!result.darkMode, dimImages: !!result.dimImages };
+    return {
+      darkMode: !!result.darkMode,
+      dimImages: !!result.dimImages,
+      systemTheme: result.systemTheme !== false
+    };
   }
 
   function readCache() {
     try {
       return normalize(JSON.parse(localStorage.getItem(CACHE)) || {});
     } catch (e) {
-      return { darkMode: false, dimImages: false };
+      return { darkMode: false, dimImages: false, systemTheme: true };
     }
   }
 
