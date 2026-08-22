@@ -34,6 +34,7 @@
   load();
   watchStorage();
   watchSystem();
+  publishSystemDark();
   setUpLauncher();
 
   /* Opens nextwork.ai unless the active tab is already there. The tab's url is
@@ -167,8 +168,48 @@
   function watchSystem() {
     var query = mediaQuery();
     if (!query) return;
-    if (query.addEventListener) query.addEventListener("change", render);
-    else if (query.addListener) query.addListener(render);
+    if (query.addEventListener) query.addEventListener("change", onSystemChange);
+    else if (query.addListener) query.addListener(onSystemChange);
+  }
+
+  function onSystemChange() {
+    render();
+    publishSystemDark();
+  }
+
+  /* Deliberately separate from syncSystem(), which returns early when System
+     Theme is off: the toolbar icon tracks the OS regardless of who owns the
+     page theme. systemDark is a cache for the service worker, not a preference,
+     so it stays out of KEYS/owned/normalize and never goes through adopt().
+
+     The popup is an extension page, so it can call setIcon itself -- that path
+     never involves the worker, and is what makes the icon correct even if a
+     storage event fails to revive it. On Firefox the worker owns nothing here
+     and theme_icons resolves the icon, so this build must not override it. */
+  function publishSystemDark() {
+    var os = systemDark();
+    storageSet({ systemDark: os });
+    if (themeIconsBuild()) return;
+    var suffix = os ? "" : "-dark";
+    try {
+      var returned = chrome.action.setIcon({
+        path: {
+          16: "icons/icon16" + suffix + ".png",
+          32: "icons/icon32" + suffix + ".png"
+        }
+      }, function () {});
+      if (returned && typeof returned.then === "function") {
+        returned.then(null, function () {});
+      }
+    } catch (e) {}
+  }
+
+  function themeIconsBuild() {
+    try {
+      return !!chrome.runtime.getManifest().action?.theme_icons;
+    } catch (e) {
+      return false;
+    }
   }
 
   function mediaQuery() {

@@ -10,6 +10,7 @@
   reconcile();
   watchStorage();
   watchSystem();
+  publishSystemDark();
   watchVisibility();
   enableAnimation();
   sweepLightSurfaces();
@@ -416,8 +417,27 @@
   function watchSystem() {
     var query = mediaQuery();
     if (!query) return;
-    if (query.addEventListener) query.addEventListener("change", reconcile);
-    else if (query.addListener) query.addListener(reconcile);
+    if (query.addEventListener) query.addEventListener("change", onSystemChange);
+    else if (query.addListener) query.addListener(onSystemChange);
+  }
+
+  function onSystemChange() {
+    reconcile();
+    publishSystemDark();
+  }
+
+  /* Separate from reconcile(), which only resolves the query when systemTheme
+     is on: the toolbar icon tracks the OS whoever owns the page theme. A
+     content script cannot reach chrome.action, so this hands the value to the
+     worker through storage. It is what keeps the icon fresh when the OS flips
+     with no popup opened. Written only on change, since every frame runs this
+     and all_frames is true. */
+  function publishSystemDark() {
+    var os = systemDark();
+    readPrefs(function (prefs) {
+      if (prefs && !!prefs.systemDark === os) return;
+      writePrefs({ systemDark: os });
+    });
   }
 
   function mediaQuery() {
@@ -445,7 +465,7 @@
     }
     var returned;
     try {
-      returned = chrome.storage.local.get(["darkMode", "dimImages", "systemTheme"], finish);
+      returned = chrome.storage.local.get(["darkMode", "dimImages", "systemTheme", "systemDark"], finish);
     } catch (e) {
       finish(null);
       return;

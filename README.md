@@ -46,6 +46,7 @@ This is a temporary install — Firefox unloads it on restart, and reloading pic
 - **Open NextWork** — jumps to the platform (opens https://nextwork.ai in a new tab), and goes inert when you are already there. Uses an anchored domain regex (`/^https?:\/\/([^\/]*\.)?nextwork\.(ai|org)(\/|$|\?|#)/`) so `nextwork.ai.example.com` does not match. The tab's URL is readable because the extension holds `host_permissions` for these domains; on any other site the browser withholds it, and an unreadable URL is the signal to offer the button — no new permission needed.
 - Preferences persist across reloads, navigations, tabs and restarts
 - No flash of white on page load
+- Toolbar icon adapts to the browser theme — Firefox resolves it natively via `theme_icons`; Chrome has no such key, so it approximates from `prefers-color-scheme`
 - Keyboard shortcut: `Cmd+Shift+D` / `Ctrl+Shift+D` — takes manual control if System Theme is on
 - Fully keyboard accessible
 

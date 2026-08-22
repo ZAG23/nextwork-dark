@@ -43,7 +43,11 @@
       "32": "icons/icon32.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
-    }
+    },
+    "theme_icons": [
+      { "size": 16, "light": "icons/icon16.png", "dark": "icons/icon16-dark.png" },
+      { "size": 32, "light": "icons/icon32.png", "dark": "icons/icon32-dark.png" }
+    ]
   },
   "icons": {
     "16": "icons/icon16.png",

@@ -126,6 +126,23 @@ This is why the feature adds no new permission. The dual-shape `chrome.tabs.quer
 
 Handles the keyboard command. Nothing else. The command turns `systemTheme` off and flips `darkMode`, so the shortcut is an escape hatch from system tracking rather than a no-op while it is on. Dark mode works whether or not it is running — MV3 workers are designed to be evicted, so anything user-visible that depends on one is a latent failure.
 
+### The toolbar icon
+
+The mark is an alpha-mask glyph in a single warm off-white (`#F8F5F1`); the shape lives entirely in the alpha channel, so on a light toolbar it is close to invisible. `icons/icon{16,32}-dark.png` are the dark-ink counterparts — a pure RGB substitution with the alpha preserved, recoloured per size rather than downscaled from the 128, because each size is independently hand-antialiased.
+
+The two browsers are not equally capable here, and the asymmetry is the whole design:
+
+- **Firefox detects it properly.** `theme_icons` in `firefox/manifest.json` is resolved by the browser against the active theme, third-party themes included. No JS.
+- **Chrome cannot detect it at all.** There is no API for the toolbar's background colour, and `theme_icons` is unimplemented. `prefers-color-scheme` is the only lever, and it reports the *OS* setting, not the toolbar — a custom Chrome theme can defeat it. This is a knowingly approximate answer to a question Chrome does not expose.
+
+So `background.js` opts out when the manifest declares `theme_icons`, using the key's presence as the build marker — `sync-firefox.sh` copies that file verbatim and cannot fork it. Overriding Firefox's real detection with Chrome's guess would be a downgrade.
+
+**The `theme_icons` polarity is a footgun.** The keys name the theme's *text* colour, not the icon's: `"dark"` displays under a dark-text theme (Firefox Light — a light toolbar) and so points at the dark-ink file, while `"light"` displays under a light-text theme (Firefox Dark) and points at the off-white one. The names coincide with the icon's own ink, which is why `icon16-dark.png` on the `"dark"` key reads correctly. Inverting it produces an invisible icon in exactly the case being fixed.
+
+On Chrome the value reaches the worker as `systemDark` in `chrome.storage.local`. That key is a **cache, not a preference** — it stays out of the popup's `KEYS`/`owned`/`normalize()` machinery and never passes through `adopt()`. `popup.js` and `content.js` both publish it, and the popup additionally calls `setIcon` itself: it is an extension page with full `chrome.action` access, so that path never involves the worker and holds even if a storage event fails to revive it. The worker's listener is an optimisation on top, covering an OS flip while a NextWork tab is open, and `onStartup`/`onInstalled` cover a browser restart dropping the session icon.
+
+Between install and the first `setIcon`, Chrome shows `default_icon` — the off-white file — which is wrong on a light toolbar. The only real fix for that window is an icon with an opaque background, which would remove the need for variants altogether.
+
 ## Testing and contributing
 
 ### Testing constraints
@@ -145,5 +162,6 @@ To test clickability you must synthesize real mouse events with `Input.dispatchM
 - **Never paint an element the site left transparent.** Inferring a surface from a structural word like `card` or `container` invents a background the site never had. The editor column is `rgba(0,0,0,0)` by design; painting it creates a visible seam.
 - **Short substring selectors over-match.** `[class*="tip"]` matches `tiptap`, the editor root, painting the entire content column as a callout. Use `[class~="..."]` for short patterns, or measure with `getComputedStyle` rather than matching class names.
 - **No new build step or dependencies.** The extension is plain JS with no bundler, so it works in any Chromium browser including WebKit-derived layers with partial MV3 support.
+- **Do not let `background.js` call `setIcon` on the Firefox build.** It would replace `theme_icons`' real theme detection with a `prefers-color-scheme` guess, silently, and only on themes whose polarity disagrees with the OS.
 - **`darkMode` is the effective state, not the user's manual choice.** Any new consumer should read that one key. Reintroducing a "manual value plus a system override" split puts the resolution in three places and breaks the service worker, which cannot resolve it at all.
 - **Do not weaken the gate attribute or break the toggle.** Both are verified working: the toggle passes real-mouse-click tests at centre, all four edges, and both corners, under promise / callback-only / throwing `chrome` stubs.
