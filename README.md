@@ -41,11 +41,12 @@ This is a temporary install — Firefox unloads it on restart, and reloading pic
 ## Features
 
 - Warm dark theme for nextwork.ai and nextwork.org, matched to the site's own palette
+- **System Theme** — on by default; follows your device's light/dark appearance setting, and the Dark Mode toggle goes inert while it does. Turn it off, or press the keyboard shortcut, to take manual control.
 - **Dim Images** — softens images while dark mode is active, full brightness on hover
 - **Open NextWork** — jumps to the platform (opens https://nextwork.ai in a new tab), and goes inert when you are already there. Uses an anchored domain regex (`/^https?:\/\/([^\/]*\.)?nextwork\.(ai|org)(\/|$|\?|#)/`) so `nextwork.ai.example.com` does not match. The tab's URL is readable because the extension holds `host_permissions` for these domains; on any other site the browser withholds it, and an unreadable URL is the signal to offer the button — no new permission needed.
 - Preferences persist across reloads, navigations, tabs and restarts
 - No flash of white on page load
-- Keyboard shortcut: `Cmd+Shift+D` / `Ctrl+Shift+D`
+- Keyboard shortcut: `Cmd+Shift+D` / `Ctrl+Shift+D` — takes manual control if System Theme is on
 - Fully keyboard accessible
 
 ## How it works
@@ -56,7 +57,7 @@ This is a temporary install — Firefox unloads it on restart, and reloading pic
 | `firefox/manifest.json` | MV3, Firefox build. Same as above but `background.scripts` instead of `service_worker`, plus a `gecko` id. Every other file in `firefox/` is a real copy of the Chromium source, kept in sync by `scripts/sync-firefox.sh` — not a symlink, which Firefox's resource loader does not follow. |
 | `content.js` | Sets a gate attribute on `<html>` at `document_start`; sweeps for light surfaces CSS cannot reach. |
 | `theme.css` | The theme. Every rule gated behind `html[data-nwdark="on"]`. |
-| `popup.html` / `popup.css` / `popup.js` | Two toggles, backed by `chrome.storage.local`. |
+| `popup.html` / `popup.css` / `popup.js` | Three toggles, backed by `chrome.storage.local`. |
 | `background.js` | Keyboard command only — dark mode does not depend on it. |
 
 Three design decisions are load-bearing:

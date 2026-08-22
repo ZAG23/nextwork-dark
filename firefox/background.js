@@ -2,8 +2,12 @@
    this worker, so dark mode still works if it is asleep or unsupported. */
 chrome.commands.onCommand.addListener(function (command) {
   if (command !== "toggle-dark") return;
+  /* Escapes System Theme rather than fighting it: darkMode already holds the
+     effective state (content.js writes the resolved value back), so flipping it
+     and dropping ownership inverts what the user is actually looking at. Both
+     keys go in one set() so listeners see a single onChanged. */
   get(function (result) {
-    set({ darkMode: !result?.darkMode });
+    set({ systemTheme: false, darkMode: !result?.darkMode });
   });
 });
 

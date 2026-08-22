@@ -9,6 +9,7 @@
   ensureTheme();
   reconcile();
   watchStorage();
+  watchSystem();
   watchVisibility();
   enableAnimation();
   sweepLightSurfaces();
@@ -396,11 +397,40 @@
     if (pierce) pierce();
   }
 
+  /* darkMode holds the EFFECTIVE state and systemTheme only says who owns it,
+     so the resolved value is written back. That write is what makes the
+     keyboard shortcut work on its first press: the service worker has no
+     matchMedia, and flips whatever darkMode says. */
   function reconcile() {
     readPrefs(function (prefs) {
       if (!prefs) return;
-      setGate(encode(!!prefs.darkMode, !!prefs.dimImages));
+      var dark = prefs.systemTheme !== false ? systemDark() : !!prefs.darkMode;
+      if (dark !== !!prefs.darkMode) writePrefs({ darkMode: dark });
+      setGate(encode(dark, !!prefs.dimImages));
     });
+  }
+
+  /* The OS preference is not stored, so chrome.storage.onChanged never fires
+     for it. addListener is the pre-EventTarget MediaQueryList shape, which
+     older WebKit is stuck on. */
+  function watchSystem() {
+    var query = mediaQuery();
+    if (!query) return;
+    if (query.addEventListener) query.addEventListener("change", reconcile);
+    else if (query.addListener) query.addListener(reconcile);
+  }
+
+  function mediaQuery() {
+    try {
+      return window.matchMedia("(prefers-color-scheme: dark)");
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function systemDark() {
+    var query = mediaQuery();
+    return !!(query && query.matches);
   }
 
   /* Passes a callback and also handles a returned promise, since WebKit-derived
@@ -415,7 +445,7 @@
     }
     var returned;
     try {
-      returned = chrome.storage.local.get(["darkMode", "dimImages"], finish);
+      returned = chrome.storage.local.get(["darkMode", "dimImages", "systemTheme"], finish);
     } catch (e) {
       finish(null);
       return;
@@ -424,6 +454,19 @@
       returned.then(finish, function () {
         finish(null);
       });
+    }
+  }
+
+  /* Same dual callback/promise shape as readPrefs, for the same reason. */
+  function writePrefs(value) {
+    var returned;
+    try {
+      returned = chrome.storage.local.set(value, function () {});
+    } catch (e) {
+      return;
+    }
+    if (returned && typeof returned.then === "function") {
+      returned.then(null, function () {});
     }
   }
 
